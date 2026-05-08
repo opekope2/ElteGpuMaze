@@ -4,7 +4,7 @@
         {
             "label": "Build",
             "type": "shell",
-            "command": "g++ -g -o ${workspaceRoot}/bin/main ${workspaceRoot}/main.cpp"
+            "command": "${workspaceRoot}/build.sh"
         }
     ]
 }
