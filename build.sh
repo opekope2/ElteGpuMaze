@@ -36,6 +36,18 @@ _build() (
   __run g++ -Wall -o "$OUT"/main "$@" ${CXXFLAGS[@]} "$SRC"/*.cpp "$GEN"/*.cpp
 )
 
+_gen_clangd() (
+  echo "CompileFlags:"
+  echo "  Add:"
+  for flag in ${CXXFLAGS[@]}; do
+    echo "    - $flag"
+  done
+)
+
+gen_clangd() (
+  _gen_clangd > .clangd
+)
+
 clean() (
   __run rm -rf "$OUT" "$GEN"
 )
@@ -59,7 +71,7 @@ build() (
   _build "${BUILD_FLAGS[@]}"
 )
 
-COMMANDS=(clean gen_kernels debug build)
+COMMANDS=(gen_clangd clean gen_kernels debug build)
 
 # Argument processing
 _process() (

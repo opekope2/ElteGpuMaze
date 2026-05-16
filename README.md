@@ -11,3 +11,7 @@ opencl-clhpp  # OpenCL C++ headers
 libglvnd      # OpenGL headers
 xxd           # Kernel to header embedding
 ```
+
+## Setup
+
+When using the clangd extension in VSCode, the `./build.sh gen_clangd` command can be used to generate a `.clangd` file, which helps with IntelliSense.
