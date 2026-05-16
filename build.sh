@@ -24,7 +24,7 @@ _gen_kernels() (
 
   for f in "$KRN"/*.cl; do
     FILENAME=$(basename "$f")
-    FILENAME=${FILENAME%.*} # Without extension
+    FILENAME=${FILENAME//./_}
 
     __run xxd -i -t -n "$FILENAME" "$f" "$GEN"/"$FILENAME".cpp
     echo "extern unsigned char $FILENAME[];" >> "$KERNELS_HPP"
@@ -33,7 +33,6 @@ _gen_kernels() (
 )
 
 _build() (
-  __run mkdir -p "$OUT"
   __run g++ -Wall -o "$OUT"/main "$@" ${CXXFLAGS[@]} "$SRC"/*.cpp "$GEN"/*.cpp
 )
 
@@ -47,12 +46,16 @@ gen_kernels() (
 )
 
 debug() (
-  _gen_kernels
+  clean
+  gen_kernels
+  __run mkdir -p "$OUT"
   _build "${DEBUG_FLAGS[@]}"
 )
 
 build() (
-  _gen_kernels
+  clean
+  gen_kernels
+  __run mkdir -p "$OUT"
   _build "${BUILD_FLAGS[@]}"
 )
 
