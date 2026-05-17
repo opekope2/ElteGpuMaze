@@ -14,8 +14,8 @@ private:
   // TODO KernelFunctor
 
 public:
-  MazeApp(Device &dev)
-      : App(dev),
+  MazeApp(Device &dev, Context &ctx)
+      : App(dev, ctx),
         maze(buildProgramFromSource(reinterpret_cast<char *>(maze_cl))) {}
 
   void run() override {}

@@ -12,7 +12,8 @@ int main(int argc, char **argv) {
   try {
     // TODO handle multiple platforms, multiple devices
     Device dev = Device::getDefault();
-    MazeApp maze(dev);
+    Context ctx(dev);
+    MazeApp maze(dev, ctx);
     maze.run();
 
     return 0;

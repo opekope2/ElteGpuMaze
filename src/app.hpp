@@ -9,12 +9,12 @@ using namespace cl;
 
 class App {
 protected:
-  Device dev;
-  Context ctx;
+  Device &dev;
+  Context &ctx;
   CommandQueue q;
 
 public:
-  App(Device &dev) : dev(dev), ctx(dev), q(ctx, dev) {}
+  App(Device &dev, Context &ctx) : dev(dev), ctx(ctx), q(ctx, dev) {}
 
 public:
   virtual void run() = 0;
