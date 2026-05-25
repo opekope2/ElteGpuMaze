@@ -8,18 +8,18 @@ using namespace std;
 using namespace cl;
 
 class App {
-  protected:
+protected:
     Device &dev;
     Context &ctx;
     CommandQueue q;
 
-  public:
+public:
     App(Device &dev, Context &ctx) : dev(dev), ctx(ctx), q(ctx, dev) {}
 
-  public:
+public:
     virtual void run() = 0;
 
-  protected:
+protected:
     inline Program buildProgramFromSource(string source) {
         Program p(ctx, source);
 

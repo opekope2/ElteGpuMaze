@@ -13,8 +13,8 @@
 #include <stdexcept>
 #include <vector>
 
-#define CHECK(v, e)                                                            \
-    if (!v)                                                                    \
+#define CHECK(v, e) \
+    if (!v)         \
         throw runtime_error(e " failed");
 
 using namespace std;

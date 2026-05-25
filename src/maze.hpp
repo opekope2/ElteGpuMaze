@@ -9,11 +9,11 @@
 using namespace cl;
 
 class MazeApp : public App {
-  private:
+private:
     Program maze;
     // TODO KernelFunctor
 
-  public:
+public:
     MazeApp(Device &dev, Context &ctx)
         : App(dev, ctx),
           maze(buildProgramFromSource(reinterpret_cast<char *>(maze_cl))) {}
