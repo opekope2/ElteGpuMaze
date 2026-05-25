@@ -9,14 +9,14 @@
 using namespace cl;
 
 class MazeApp : public App {
-private:
-  Program maze;
-  // TODO KernelFunctor
+  private:
+    Program maze;
+    // TODO KernelFunctor
 
-public:
-  MazeApp(Device &dev, Context &ctx)
-      : App(dev, ctx),
-        maze(buildProgramFromSource(reinterpret_cast<char *>(maze_cl))) {}
+  public:
+    MazeApp(Device &dev, Context &ctx)
+        : App(dev, ctx),
+          maze(buildProgramFromSource(reinterpret_cast<char *>(maze_cl))) {}
 
-  void run() override {}
+    void run() override {}
 };
