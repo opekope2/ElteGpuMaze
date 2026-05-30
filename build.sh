@@ -3,7 +3,8 @@ set -euo pipefail
 
 # Dirs
 SRC=src
-KRN="$SRC"/kernels
+KERNELS="$SRC"/kernels
+SHADERS="$SRC"/shaders
 OUT=bin
 GEN=gen
 
@@ -18,17 +19,35 @@ __run() (
     "$@"
 )
 
+_gen_prepare() (
+    __run mkdir -p "$GEN"
+)
+
 _gen_kernels() (
     KERNELS_HPP="$GEN"/kernels.hpp
     __run rm -f "$KERNELS_HPP"
 
-    for f in "$KRN"/*.cl; do
+    for f in "$KERNELS"/*.cl; do
         FILENAME=$(basename "$f")
         FILENAME=${FILENAME//./_}
 
         __run xxd -i -t -n "$FILENAME" "$f" "$GEN"/"$FILENAME".cpp
         echo "extern unsigned char $FILENAME[];" >> "$KERNELS_HPP"
         echo "extern unsigned int ${FILENAME}_len;" >> "$KERNELS_HPP"
+    done
+)
+
+_gen_shaders() (
+    SHADERS_HPP="$GEN"/shaders.hpp
+    __run rm -f "$SHADERS_HPP"
+
+    for f in "$SHADERS"/*.vert "$SHADERS"/*.frag; do
+        FILENAME=$(basename "$f")
+        FILENAME=${FILENAME//./_}
+
+        __run xxd -i -t -n "$FILENAME" "$f" "$GEN"/"$FILENAME".cpp
+        echo "extern unsigned char $FILENAME[];" >> "$SHADERS_HPP"
+        echo "extern unsigned int ${FILENAME}_len;" >> "$SHADERS_HPP"
     done
 )
 
@@ -53,13 +72,19 @@ clean() (
 )
 
 gen_kernels() (
-    __run mkdir -p "$GEN"
+    _gen_prepare
     _gen_kernels
+)
+
+gen_shaders() (
+    _gen_prepare
+    _gen_shaders
 )
 
 debug() (
     clean
     gen_kernels
+    gen_shaders
     __run mkdir -p "$OUT"
     _build "${DEBUG_FLAGS[@]}"
 )
@@ -67,11 +92,12 @@ debug() (
 build() (
     clean
     gen_kernels
+    gen_shaders
     __run mkdir -p "$OUT"
     _build "${BUILD_FLAGS[@]}"
 )
 
-COMMANDS=(gen_clangd clean gen_kernels debug build)
+COMMANDS=(gen_clangd clean gen_kernels gen_shaders debug build)
 
 # Argument processing
 _process() (
