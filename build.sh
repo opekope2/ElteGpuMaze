@@ -14,80 +14,80 @@ DEBUG_FLAGS=(-g -O0)
 
 # Commands
 __run() (
-  echo "$@"
-  "$@"
+    echo "$@"
+    "$@"
 )
 
 _gen_kernels() (
-  KERNELS_HPP="$GEN"/kernels.hpp
-  __run rm -f "$KERNELS_HPP"
+    KERNELS_HPP="$GEN"/kernels.hpp
+    __run rm -f "$KERNELS_HPP"
 
-  for f in "$KRN"/*.cl; do
-    FILENAME=$(basename "$f")
-    FILENAME=${FILENAME//./_}
+    for f in "$KRN"/*.cl; do
+        FILENAME=$(basename "$f")
+        FILENAME=${FILENAME//./_}
 
-    __run xxd -i -t -n "$FILENAME" "$f" "$GEN"/"$FILENAME".cpp
-    echo "extern unsigned char $FILENAME[];" >> "$KERNELS_HPP"
-    echo "extern unsigned int ${FILENAME}_len;" >> "$KERNELS_HPP"
-  done
+        __run xxd -i -t -n "$FILENAME" "$f" "$GEN"/"$FILENAME".cpp
+        echo "extern unsigned char $FILENAME[];" >> "$KERNELS_HPP"
+        echo "extern unsigned int ${FILENAME}_len;" >> "$KERNELS_HPP"
+    done
 )
 
 _build() (
-  __run g++ -Wall -o "$OUT"/main "$@" ${CXXFLAGS[@]} "$SRC"/*.cpp "$GEN"/*.cpp
+    __run g++ -Wall -o "$OUT"/main "$@" ${CXXFLAGS[@]} "$SRC"/*.cpp "$GEN"/*.cpp
 )
 
 _gen_clangd() (
-  echo "CompileFlags:"
-  echo "  Add:"
-  for flag in ${CXXFLAGS[@]}; do
-    echo "    - $flag"
-  done
+    echo "CompileFlags:"
+    echo "  Add:"
+    for flag in ${CXXFLAGS[@]}; do
+        echo "    - $flag"
+    done
 )
 
 gen_clangd() (
-  _gen_clangd > .clangd
+    _gen_clangd > .clangd
 )
 
 clean() (
-  __run rm -rf "$OUT" "$GEN"
+    __run rm -rf "$OUT" "$GEN"
 )
 
 gen_kernels() (
-  __run mkdir -p "$GEN"
-  _gen_kernels
+    __run mkdir -p "$GEN"
+    _gen_kernels
 )
 
 debug() (
-  clean
-  gen_kernels
-  __run mkdir -p "$OUT"
-  _build "${DEBUG_FLAGS[@]}"
+    clean
+    gen_kernels
+    __run mkdir -p "$OUT"
+    _build "${DEBUG_FLAGS[@]}"
 )
 
 build() (
-  clean
-  gen_kernels
-  __run mkdir -p "$OUT"
-  _build "${BUILD_FLAGS[@]}"
+    clean
+    gen_kernels
+    __run mkdir -p "$OUT"
+    _build "${BUILD_FLAGS[@]}"
 )
 
 COMMANDS=(gen_clangd clean gen_kernels debug build)
 
 # Argument processing
 _process() (
-  for cmd in "${COMMANDS[@]}"; do
-    if [[ "$cmd" == "$1" ]]; then
-      "$cmd"
-      exit 0
-    fi
-  done
+    for cmd in "${COMMANDS[@]}"; do
+        if [[ "$cmd" == "$1" ]]; then
+        "$cmd"
+        exit 0
+        fi
+    done
 
-  echo "Invalid command: $1"
-  exit 1
+    echo "Invalid command: $1"
+    exit 1
 )
 
 if [ $# -eq 0 ]; then
-  _process build
+    _process build
 else
-  _process "$1"
+    _process "$1"
 fi
