@@ -6,9 +6,9 @@ Path finding in a maze
 
 ```sh
 gcc           # C++ compiler
-mingw-w64-gcc # C++ cross compiler
 opencl-clhpp  # OpenCL C++ headers
 libglvnd      # OpenGL headers
+libepoxy      # OpenGL extension loader
 xxd           # Kernel to header embedding
 glfw          # Windowing
 ```
