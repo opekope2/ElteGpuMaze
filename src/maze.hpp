@@ -1,22 +1,41 @@
 #pragma once
 
-#include "app.hpp"
-#include "kernels.hpp"
-#include <CL/cl.h>
+#include "../gen/kernels.hpp"
 #include <CL/opencl.hpp>
-#include <cassert>
+
+#define WALL_TOP 0x1u
+#define WALL_RIGHT 0x2u
+#define WALL_BOTTOM 0x4u
+#define WALL_LEFT 0x8u
 
 using namespace cl;
 
-class MazeApp : public App {
+class Maze {
 private:
+    int w;
+    int h;
     Program maze;
-    // TODO KernelFunctor
+    KernelFunctor<Buffer> generate;
+    KernelFunctor<Buffer, ImageGL> render;
+    Buffer data;
 
 public:
-    MazeApp(Device &dev, Context &ctx)
-        : App(dev, ctx),
-          maze(buildProgramFromSource(reinterpret_cast<char *>(maze_cl))) {}
+    Maze(Context &ctx, int w, int h)
+        : w(w),
+          h(h),
+          maze(ctx, reinterpret_cast<char *>(maze_cl), true),
+          generate(maze, "generate"),
+          render(maze, "render"),
+          data(ctx, CL_MEM_READ_WRITE, sizeof(unsigned char) * w * h) {}
 
-    void run() override {}
+    int width() { return w; }
+    int height() { return h; }
+
+    void generateData(CommandQueue &q) {
+        generate(EnqueueArgs(q, NDRange(w, h)), data);
+    }
+
+    void renderData(CommandQueue &q, ImageGL &img) {
+        render(EnqueueArgs(q, NDRange(w, h)), data, img);
+    }
 };
