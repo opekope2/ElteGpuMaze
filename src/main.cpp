@@ -1,73 +1,74 @@
-#include "kernels.hpp"
+#include "../gen/kernels.hpp"
+#include "../gen/shaders.hpp"
 #include "maze.hpp"
-#include <CL/cl.h>
-#include <CL/cl_gl.h>
+#include "maze_renderer.hpp"
+#include "util/gl.hpp"
+#include "util/glfw.hpp"
 #include <CL/opencl.hpp>
-#include <EGL/egl.h>
 #include <GL/gl.h>
-#include <GL/glx.h>
 #include <GLFW/glfw3.h>
-#include <exception>
-#include <format>
+#include <epoxy/gl.h>
 #include <iostream>
-#include <stdexcept>
-#include <vector>
-
-#define CHECK(v, e) \
-    if (!v)         \
-        throw runtime_error(e " failed");
 
 using namespace std;
 using namespace cl;
 
-std::vector<cl_context_properties> getContextProperties(GLFWwindow *w) {
-    auto eglCtx = eglGetCurrentContext();
-    auto glxCtx = glXGetCurrentContext();
+void maze(GlfwWindow &win, Context &ctx, CommandQueue &q) {
+    Maze maze(ctx, 16, 16);
+    MazeRenderer renderer;
 
-    if (eglCtx != EGL_NO_CONTEXT) {
-        return {CL_EGL_DISPLAY_KHR,
-                (cl_context_properties)eglGetCurrentDisplay(),
-                CL_GL_CONTEXT_KHR, (cl_context_properties)eglCtx, 0};
-    } else if (glxCtx != nullptr) {
-        return {CL_GLX_DISPLAY_KHR,
-                (cl_context_properties)glXGetCurrentDisplay(),
-                CL_GL_CONTEXT_KHR, (cl_context_properties)glxCtx, 0};
-    } else {
-        throw runtime_error("Current context not available");
+    auto tex = createTexture<GL_TEXTURE_2D>();
+    glTextureStorage2D(tex, 1, GL_R8UI, maze.width(), maze.height());
+    glTextureParameteri(tex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTextureParameteri(tex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    ImageGL img(ctx, CL_MEM_WRITE_ONLY, GL_TEXTURE_2D, 0, tex);
+    std::vector<Memory> glObjs = {img};
+
+    while (!glfwWindowShouldClose(win)) {
+        int w, h;
+        glfwGetFramebufferSize(win, &w, &h);
+        glViewport(0, 0, w, h);
+
+        q.enqueueAcquireGLObjects(&glObjs);
+        maze.generateData(q);
+        maze.renderData(q, img);
+        q.enqueueReleaseGLObjects(&glObjs);
+        q.finish();
+
+        renderer.render(w, h, tex);
+
+        glfwSwapBuffers(win);
+        glfwPollEvents();
     }
 }
 
 int main(int argc, char **argv) {
     try {
-        CHECK(glfwInit(), "glfwInit");
-
-        auto w = glfwCreateWindow(800, 480, argv[0], nullptr, nullptr);
-        CHECK(w, "glfwCreateWindow");
-        glfwMakeContextCurrent(w);
+        auto win = Glfw::instance().createWindow(800, 480, argv[0], nullptr, nullptr);
+        glfwMakeContextCurrent(win);
 
         // TODO handle multiple platforms, multiple devices
+        Platform platform = Platform::getDefault();
         Device dev = Device::getDefault();
-        auto props = getContextProperties(w);
+        auto props = getContextProperties(platform);
         Context ctx(dev, props.data());
-        MazeApp maze(dev, ctx);
+        CommandQueue q(ctx, dev);
 
-        while (!glfwWindowShouldClose(w)) {
-            maze.run();
+        maze(win, ctx, q);
 
-            glClear(GL_COLOR_BUFFER_BIT);
-            glfwSwapBuffers(w);
-            glfwPollEvents();
-        }
-
-        glfwDestroyWindow(w);
-        glfwTerminate();
         return 0;
+    } catch (const BuildError &e) {
+        cerr << format("OpenCL error: {} ({})", e.what(), e.err()) << endl;
+
+        for (auto &&[dev, log] : e.getBuildLog()) {
+            cerr << format("Build log for {}:\n{}", dev.getInfo<CL_DEVICE_NAME>(), log) << endl;
+        }
     } catch (const Error &e) {
         cerr << format("OpenCL error: {} ({})", e.what(), e.err()) << endl;
     } catch (const exception &e) {
         cerr << format("Fatal error: {}", e.what()) << endl;
     }
 
-    glfwTerminate();
     return 1;
 }
