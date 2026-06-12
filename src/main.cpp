@@ -1,9 +1,13 @@
 #include "../gen/kernels.hpp"
 #include "../gen/shaders.hpp"
+#include "maze_generator.hpp"
 #include "maze_renderer.hpp"
+#include "maze_state.hpp"
 #include "prim.hpp"
 #include "util/gl.hpp"
 #include "util/glfw.hpp"
+#include <CL/cl.h>
+#include <CL/cl_platform.h>
 #include <CL/opencl.hpp>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
@@ -13,33 +17,73 @@
 using namespace std;
 using namespace cl;
 
+void handleInput(GLFWwindow *window, int key, int scancode, int action, int mods) {
+    auto *state = static_cast<MazeState *>(glfwGetWindowUserPointer(window));
+
+    cl_uint dw = 0, dh = 0, seed = 0;
+
+    if (key == GLFW_KEY_LEFT && action != GLFW_RELEASE)
+        dw--;
+    if (key == GLFW_KEY_RIGHT && action != GLFW_RELEASE)
+        dw++;
+    if (key == GLFW_KEY_UP && action != GLFW_RELEASE)
+        dh++;
+    if (key == GLFW_KEY_DOWN && action != GLFW_RELEASE)
+        dh--;
+
+    if (key == GLFW_KEY_EQUAL && action != GLFW_RELEASE)
+        seed++;
+    if (key == GLFW_KEY_MINUS && action != GLFW_RELEASE)
+        seed--;
+
+    if (seed)
+        state->seed(seed + state->seed());
+    if (dw || dh)
+        state->resize(dw, dh);
+}
+
+void generateMaze(MazeGenerator *maze, MazeState &state, CommandQueue &q) {
+    q.enqueueAcquireGLObjects(&state.glObjs());
+    maze->generate(q, state);
+    maze->render(q, state);
+    q.enqueueReleaseGLObjects(&state.glObjs());
+    q.finish();
+}
+
 void maze(GlfwWindow &win, Context &ctx, CommandQueue &q) {
-    Prim prim(ctx, 32, 32, 6 * 7);
+    PrimCL primCl(ctx);
+    SeqPrim prim(ctx, primCl);
+
     MazeRenderer renderer;
 
-    auto tex = createTexture<GL_TEXTURE_2D>();
-    glTextureStorage2D(tex, 1, GL_R8UI, prim.width(), prim.height());
-    glTextureParameteri(tex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTextureParameteri(tex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    MazeState state(ctx, 32, 32, 6 * 7);
 
-    ImageGL img(ctx, CL_MEM_WRITE_ONLY, GL_TEXTURE_2D, 0, tex);
-    std::vector<Memory> glObjs = {img};
+    MazeGenerator *maze = &prim;
+    generateMaze(maze, state, q);
+
+    glfwSetWindowUserPointer(win, &state);
+    glfwSetKeyCallback(win, handleInput);
 
     while (!glfwWindowShouldClose(win)) {
         int w, h;
         glfwGetFramebufferSize(win, &w, &h);
         glViewport(0, 0, w, h);
 
-        q.enqueueAcquireGLObjects(&glObjs);
-        prim.generateSeq(q);
-        prim.renderPar(q, img);
-        q.enqueueReleaseGLObjects(&glObjs);
-        q.finish();
-
-        renderer.render(w, h, tex);
+        renderer.render(w, h, state.texture());
 
         glfwSwapBuffers(win);
         glfwPollEvents();
+
+        bool regenerate = false;
+
+        if (state.changed())
+            regenerate = true;
+
+        if (glfwGetKey(win, GLFW_KEY_P) != GLFW_RELEASE)
+            maze = &prim, regenerate = true;
+
+        if (regenerate)
+            generateMaze(maze, state, q);
     }
 }
 

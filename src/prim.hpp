@@ -1,10 +1,10 @@
 #pragma once
 
 #include "../gen/kernels.hpp"
+#include "maze_generator.hpp"
 #include <CL/cl.h>
 #include <CL/cl_platform.h>
 #include <CL/opencl.hpp>
-#include <vector>
 
 #define WALL_TOP 0x1u
 #define WALL_RIGHT 0x2u
@@ -17,41 +17,45 @@ typedef cl_uint2 Edge;
 
 using namespace cl;
 
-class Prim {
+class PrimCL {
 private:
-    cl_uint w;
-    cl_uint h;
-    cl_uint seed;
-    Program maze;
-    KernelFunctor<cl_uint, cl_uint, LocalSpaceArg, LocalSpaceArg, LocalSpaceArg, Buffer> seqPrim;
-    KernelFunctor<Buffer, ImageGL> render;
-    Buffer mazeData;
+    Program primCl;
 
 public:
-    Prim(Context &ctx, cl_uint w, cl_uint h, cl_uint seed)
-        : w(w),
-          h(h),
-          seed(seed),
-          maze(ctx, reinterpret_cast<char *>(prim_cl), true),
-          seqPrim(maze, "seqPrim"),
-          render(maze, "render"),
-          mazeData(ctx, CL_MEM_READ_WRITE, sizeof(cl_uchar) * w * h) {}
+    KernelFunctor<cl_uint, cl_uint, cl_uint, LocalSpaceArg, LocalSpaceArg, LocalSpaceArg, Buffer> seqPrim;
+    KernelFunctor<Buffer, ImageGL> render;
 
-    cl_uint width() { return w; }
-    cl_uint height() { return h; }
+    PrimCL(Context &ctx)
+        : primCl(ctx, reinterpret_cast<char *>(prim_cl), true),
+          seqPrim(primCl, "seqPrim"),
+          render(primCl, "render") {}
+};
 
-    void generateSeq(CommandQueue &q) {
-        seqPrim(
+class SeqPrim : public MazeGenerator {
+private:
+    PrimCL &primCl;
+
+public:
+    SeqPrim(Context &ctx, PrimCL &primCl)
+        : MazeGenerator(ctx),
+          primCl(primCl) {}
+
+    Event generate(CommandQueue &q, MazeState &state) override {
+        return primCl.seqPrim(
             EnqueueArgs(q, NDRange(1, 1)),
-            w,
-            seed,
-            Local(sizeof(cl_uint) * w * h),
-            Local(sizeof(Vertex) * w * h),
-            Local(sizeof(cl_uchar) * w * h),
-            mazeData);
+            state.width(),
+            state.height(),
+            state.seed(),
+            Local(sizeof(cl_uint) * state.width() * state.height()),
+            Local(sizeof(Vertex) * state.width() * state.height()),
+            Local(sizeof(cl_uchar) * state.width() * state.height()),
+            state.mazeData());
     }
 
-    void renderPar(CommandQueue &q, ImageGL &img) {
-        render(EnqueueArgs(q, NDRange(w, h)), mazeData, img);
+    Event render(CommandQueue &q, MazeState &state) override {
+        return primCl.render(
+            EnqueueArgs(q, NDRange(state.width(), state.height())),
+            state.mazeData(),
+            state.glImage());
     }
 };
