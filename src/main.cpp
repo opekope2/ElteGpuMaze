@@ -4,6 +4,7 @@
 #include "maze_renderer.hpp"
 #include "maze_state.hpp"
 #include "prim.hpp"
+#include "util/cl.hpp"
 #include "util/gl.hpp"
 #include "util/glfw.hpp"
 #include <CL/cl.h>
@@ -12,6 +13,7 @@
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <epoxy/gl.h>
+#include <format>
 #include <iostream>
 
 using namespace std;
@@ -44,22 +46,32 @@ void handleInput(GLFWwindow *window, int key, int scancode, int action, int mods
 
 void generateMaze(MazeGenerator *maze, MazeState &state, CommandQueue &q) {
     q.enqueueAcquireGLObjects(&state.glObjs());
-    maze->generate(q, state);
+    auto generate = maze->generate(q, state);
     maze->render(q, state);
     q.enqueueReleaseGLObjects(&state.glObjs());
     q.finish();
+
+    auto generateNs = getProfilingTimeNs(generate);
+    cout << format("Generated {}x{} maze using {} in {}ms/{}ns", state.width(), state.height(), maze->name(), generateNs / 1000000, generateNs) << endl;
+}
+
+void generateMazeAndUpdateTitle(GlfwWindow &win, MazeGenerator *maze, MazeState &state, CommandQueue &q) {
+    generateMaze(maze, state, q);
+
+    string title = format("{} [{}x{}@{}]", maze->name(), state.width(), state.height(), state.seed());
+    glfwSetWindowTitle(win, title.c_str());
 }
 
 void maze(GlfwWindow &win, Context &ctx, CommandQueue &q) {
     PrimCL primCl(ctx);
-    SeqPrim prim(ctx, primCl);
+    SeqPrim seqPrim(ctx, primCl);
 
     MazeRenderer renderer;
 
     MazeState state(ctx, 32, 32, 6 * 7);
 
-    MazeGenerator *maze = &prim;
-    generateMaze(maze, state, q);
+    MazeGenerator *maze = &seqPrim;
+    generateMazeAndUpdateTitle(win, maze, state, q);
 
     glfwSetWindowUserPointer(win, &state);
     glfwSetKeyCallback(win, handleInput);
@@ -80,10 +92,10 @@ void maze(GlfwWindow &win, Context &ctx, CommandQueue &q) {
             regenerate = true;
 
         if (glfwGetKey(win, GLFW_KEY_P) != GLFW_RELEASE)
-            maze = &prim, regenerate = true;
+            maze = &seqPrim, regenerate = true;
 
         if (regenerate)
-            generateMaze(maze, state, q);
+            generateMazeAndUpdateTitle(win, maze, state, q);
     }
 }
 
@@ -97,7 +109,7 @@ int main(int argc, char **argv) {
         Device dev = Device::getDefault();
         auto props = getContextProperties(platform);
         Context ctx(dev, props.data());
-        CommandQueue q(ctx, dev);
+        CommandQueue q(ctx, dev, CL_QUEUE_PROFILING_ENABLE);
 
         maze(win, ctx, q);
 

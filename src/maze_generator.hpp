@@ -13,6 +13,7 @@ protected:
 public:
     MazeGenerator(Context &ctx) : ctx(ctx) {}
 
+    virtual string name() = 0;
     virtual Event generate(CommandQueue &q, MazeState &state) = 0;
     virtual Event render(CommandQueue &q, MazeState &state) = 0;
 };

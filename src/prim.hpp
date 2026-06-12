@@ -40,6 +40,8 @@ public:
         : MazeGenerator(ctx),
           primCl(primCl) {}
 
+    string name() override { return "Sequential Prim"; }
+
     Event generate(CommandQueue &q, MazeState &state) override {
         return primCl.seqPrim(
             EnqueueArgs(q, NDRange(1, 1)),
