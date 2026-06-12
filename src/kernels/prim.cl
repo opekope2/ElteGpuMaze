@@ -29,11 +29,11 @@ Vertex minVertex(uint n, local uchar *unexplored, local uint *cheapestCost) {
     return minVertex;
 }
 
-Neighbors getNeighbors(uint wh, uint id) {
-    uint left = id % wh == 0 ? VERTEX_INVALID : id - 1;
-    uint right = id % wh == wh - 1 ? VERTEX_INVALID : id + 1;
-    uint top = id < wh ? VERTEX_INVALID : id - wh;
-    uint bottom = id >= wh * (wh - 1) ? VERTEX_INVALID : id + wh;
+Neighbors getNeighbors(uint w, uint h, uint id) {
+    uint left = id % w == 0 ? VERTEX_INVALID : id - 1;
+    uint right = id % w == w - 1 ? VERTEX_INVALID : id + 1;
+    uint top = id < w ? VERTEX_INVALID : id - w;
+    uint bottom = id >= w * (h - 1) ? VERTEX_INVALID : id + w;
 
     return (Neighbors)(left, right, top, bottom);
 }
@@ -56,13 +56,14 @@ uint weight(uint seed, Vertex a, Vertex b) {
 }
 
 // TODO parallel
-kernel void seqPrim(uint wh,
+kernel void seqPrim(uint w,
+                    uint h,
                     uint seed,
                     local uint *cheapestCost,
                     local Vertex *cheapestEdge,
                     local uchar *unexplored,
                     global uchar *mazeData) {
-    uint n = wh * wh;
+    uint n = w * h;
 
     for (uint i = 0; i < n; i++) {
         cheapestCost[i] = UINT_MAX;
@@ -79,7 +80,7 @@ kernel void seqPrim(uint wh,
 
         REMOVE(unexplored, currentVertex);
 
-        Neighbors neighbors = getNeighbors(wh, currentVertex);
+        Neighbors neighbors = getNeighbors(w, h, currentVertex);
         for (uint i = 0; i < 4; i++) {
             Vertex neighbor = neighbors[i];
             if (neighbor == VERTEX_INVALID)
