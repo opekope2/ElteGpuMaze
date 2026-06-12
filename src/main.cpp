@@ -1,7 +1,7 @@
 #include "../gen/kernels.hpp"
 #include "../gen/shaders.hpp"
-#include "maze.hpp"
 #include "maze_renderer.hpp"
+#include "prim.hpp"
 #include "util/gl.hpp"
 #include "util/glfw.hpp"
 #include <CL/opencl.hpp>
@@ -14,11 +14,11 @@ using namespace std;
 using namespace cl;
 
 void maze(GlfwWindow &win, Context &ctx, CommandQueue &q) {
-    Maze maze(ctx, 16, 16);
+    Prim prim(ctx, 32, 32, 6 * 7);
     MazeRenderer renderer;
 
     auto tex = createTexture<GL_TEXTURE_2D>();
-    glTextureStorage2D(tex, 1, GL_R8UI, maze.width(), maze.height());
+    glTextureStorage2D(tex, 1, GL_R8UI, prim.width(), prim.height());
     glTextureParameteri(tex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTextureParameteri(tex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
@@ -31,8 +31,8 @@ void maze(GlfwWindow &win, Context &ctx, CommandQueue &q) {
         glViewport(0, 0, w, h);
 
         q.enqueueAcquireGLObjects(&glObjs);
-        maze.generateData(q);
-        maze.renderData(q, img);
+        prim.generateSeq(q);
+        prim.renderPar(q, img);
         q.enqueueReleaseGLObjects(&glObjs);
         q.finish();
 
