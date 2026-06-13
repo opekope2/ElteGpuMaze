@@ -10,25 +10,6 @@ typedef uint Vertex;
 typedef uint4 Neighbors;
 typedef uint2 Edge;
 
-#define ADD(set, value) set[value] = 1
-#define REMOVE(set, value) set[value] = 0
-#define CONTAINS(set, value) set[value] != 0
-
-// TODO heap
-Vertex minVertex(uint n, local uchar *unexplored, local uint *cheapestCost) {
-    uint minCost = UINT_MAX;
-    Vertex minVertex = VERTEX_INVALID;
-
-    for (Vertex i = 0; i < n; i++) {
-        if (CONTAINS(unexplored, i) && cheapestCost[i] < minCost) {
-            minCost = cheapestCost[i];
-            minVertex = i;
-        }
-    }
-
-    return minVertex;
-}
-
 Neighbors getNeighbors(uint w, uint h, uint id) {
     uint left = id % w == 0 ? VERTEX_INVALID : id - 1;
     uint right = id % w == w - 1 ? VERTEX_INVALID : id + 1;
@@ -56,40 +37,39 @@ uint weight(uint seed, Vertex a, Vertex b) {
 }
 
 // TODO parallel
-kernel void seqPrim(uint w,
-                    uint h,
+kernel void seqPrim(uint width,
+                    uint height,
                     uint seed,
-                    local uint *cheapestCost,
-                    local Vertex *cheapestEdge,
-                    local uchar *unexplored,
+                    global Vertex *cheapestEdge,
+                    global uchar *unexplored,
+                    global Vertex *heap,
+                    global Vertex *lookup,
+                    global uint *priorities,
                     global uchar *mazeData) {
-    uint n = w * h;
+    uint n = width * height;
+    Heap h = {0, heap, lookup, priorities}; // TODO Fibonacci heap
 
-    for (uint i = 0; i < n; i++) {
-        cheapestCost[i] = UINT_MAX;
-        cheapestEdge[i] = VERTEX_INVALID;
-        ADD(unexplored, i);
-        mazeData[i] = WALL_TOP | WALL_RIGHT | WALL_BOTTOM | WALL_LEFT;
-    }
+    for (uint i = 0; i < n; i++)
+        heapInsert(&h, i, UINT_MAX);
 
     Vertex startVertex = 0;
-    cheapestCost[startVertex] = 0;
+    heapDecrease(&h, startVertex, 0);
 
-    for (uint i = 0; i < n; i++) {
-        Vertex currentVertex = minVertex(n, unexplored, cheapestCost);
+    while (h.size > 0) {
+        Vertex currentVertex = heapExtract(&h);
 
-        REMOVE(unexplored, currentVertex);
+        SET_REMOVE(unexplored, currentVertex);
 
-        Neighbors neighbors = getNeighbors(w, h, currentVertex);
+        Neighbors neighbors = getNeighbors(width, height, currentVertex);
         for (uint i = 0; i < 4; i++) {
             Vertex neighbor = neighbors[i];
             if (neighbor == VERTEX_INVALID)
                 continue;
 
             uint w = weight(seed, currentVertex, neighbor);
-            if (CONTAINS(unexplored, neighbor) && w < cheapestCost[neighbor]) {
-                cheapestCost[neighbor] = w;
+            if (SET_CONTAINS(unexplored, neighbor) && w < heapPriority(&h, neighbor)) {
                 cheapestEdge[neighbor] = currentVertex;
+                heapDecrease(&h, neighbor, w);
             }
         }
     }

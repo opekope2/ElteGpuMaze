@@ -32,6 +32,7 @@ public:
     cl_uint seed() { return _seed; }
     bool changed() { return exchange(_changed, false); }
 
+    Context &context() { return _ctx; }
     GlTexture &texture() { return _tex; }
     ImageGL &glImage() { return _glImg; }
     std::vector<Memory> &glObjs() { return _glObjs; }
