@@ -62,16 +62,16 @@ public:
     const std::vector<Edge> generateEdges(MazeState &state) {
         std::vector<Edge> edges;
         cl_uint w = state.width(), h = state.height(), s = state.seed();
-        edges.reserve((w - 1) * (h - 1));
+        edges.reserve(2 * w * h - w - h);
         for (cl_uint j = 1; j < w; j++)
             edges.emplace_back(j - 1, j, s);
         for (cl_uint i = 1; i < h; i++)
             edges.emplace_back((i - 1) * w, i * w, s);
         for (cl_uint i = 1; i < h; i++)
             for (cl_uint j = 1; j < w; j++) {
-                cl_uint ij = (i - 1) * w + (j - 1);
-                edges.emplace_back(ij, ij + 1, s);
-                edges.emplace_back(ij, ij + w, s);
+                cl_uint ij = i * w + j;
+                edges.emplace_back(ij - 1, ij, s);
+                edges.emplace_back(ij - w, ij, s);
             }
         return edges;
     }
@@ -93,7 +93,7 @@ public:
         // Does not fit into local memory on moderately large mazes, which resets my GPU
         Buffer dsu_size(state.context(), CL_MEM_READ_WRITE, sizeof(dsu_size_t) * n);
         Buffer dsu_parent(state.context(), CL_MEM_READ_WRITE, sizeof(dsu_vertex_t) * n);
-        Buffer minout(state.context(), CL_MEM_READ_WRITE, sizeof(uint) * n);
+        Buffer minout(state.context(), CL_MEM_READ_WRITE, sizeof(cl_uint) * n);
         Buffer edges_buffer(state.context(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(Edge) * edges_vector.size(), edges_vector.data());
 
         q.enqueueFillBuffer<cl_uchar>(state.mazeData(), WALL_TOP | WALL_RIGHT | WALL_BOTTOM | WALL_LEFT, 0, sizeof(cl_uchar) * n);
