@@ -44,19 +44,15 @@ void handleInput(GLFWwindow *window, int key, int scancode, int action, int mods
         state->resize(dw, dh);
 }
 
-void generateMaze(MazeGenerator *maze, MazeState &state, CommandQueue &q) {
+void generateMazeAndUpdateTitle(GlfwWindow &win, MazeGenerator *maze, MazeState &state, CommandQueue &q) {
     q.enqueueAcquireGLObjects(&state.glObjs());
-    auto generate = maze->generate(q, state);
-    maze->render(q, state);
+    auto events = maze->generateAndRender(q, state);
     q.enqueueReleaseGLObjects(&state.glObjs());
     q.finish();
 
-    auto generateNs = getProfilingTimeNs(generate);
-    cout << format("Generated {}x{} maze using {} in {}ms/{}ns", state.width(), state.height(), maze->name(), generateNs / 1000000, generateNs) << endl;
-}
-
-void generateMazeAndUpdateTitle(GlfwWindow &win, MazeGenerator *maze, MazeState &state, CommandQueue &q) {
-    generateMaze(maze, state, q);
+    auto generateNs = getProfilingTimeNs(events);
+    auto generateMs = generateNs / 1'000'000;
+    cout << format("Generated {}x{} maze using {} in {}ms/{}ns", state.width(), state.height(), maze->name(), generateMs, generateNs) << endl;
 
     string title = format("{} [{}x{}@{}]", maze->name(), state.width(), state.height(), state.seed());
     glfwSetWindowTitle(win, title.c_str());

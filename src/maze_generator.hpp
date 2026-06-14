@@ -3,6 +3,7 @@
 #include "maze_state.hpp"
 #include <CL/cl_platform.h>
 #include <CL/opencl.hpp>
+#include <vector>
 
 using namespace cl;
 
@@ -14,6 +15,5 @@ public:
     MazeGenerator(Context &ctx) : ctx(ctx) {}
 
     virtual string name() = 0;
-    virtual Event generate(CommandQueue &q, MazeState &state) = 0;
-    virtual Event render(CommandQueue &q, MazeState &state) = 0;
+    virtual std::vector<Event> generateAndRender(CommandQueue &q, MazeState &state) = 0;
 };

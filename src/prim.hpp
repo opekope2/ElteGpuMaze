@@ -45,7 +45,7 @@ public:
 
     string name() override { return "Sequential Prim"; }
 
-    Event generate(CommandQueue &q, MazeState &state) override {
+    std::vector<Event> generateAndRender(CommandQueue &q, MazeState &state) override {
         size_type n = static_cast<size_type>(state.width()) * static_cast<size_type>(state.height());
 
         // Does not fit into local memory on moderately large mazes, which resets my GPU
@@ -59,7 +59,7 @@ public:
         q.enqueueFillBuffer<cl_uchar>(unexplored, 1, 0, sizeof(cl_uchar) * n);
         q.enqueueFillBuffer<cl_uchar>(state.mazeData(), WALL_TOP | WALL_RIGHT | WALL_BOTTOM | WALL_LEFT, 0, sizeof(cl_uchar) * n);
 
-        return primCl.seqPrim(
+        Event generate = primCl.seqPrim(
             EnqueueArgs(q, NDRange(1)),
             state.width(),
             state.height(),
@@ -70,12 +70,11 @@ public:
             lookup,
             priorities,
             state.mazeData());
-    }
-
-    Event render(CommandQueue &q, MazeState &state) override {
-        return primCl.render(
+        Event render = primCl.render(
             EnqueueArgs(q, NDRange(state.width(), state.height())),
             state.mazeData(),
             state.glImage());
+
+        return {generate, render};
     }
 };
