@@ -1,5 +1,6 @@
 #include "../gen/kernels.hpp"
 #include "../gen/shaders.hpp"
+#include "boruvka.hpp"
 #include "maze_generator.hpp"
 #include "maze_renderer.hpp"
 #include "maze_state.hpp"
@@ -59,8 +60,11 @@ void generateMazeAndUpdateTitle(GlfwWindow &win, MazeGenerator *maze, MazeState 
 }
 
 void maze(GlfwWindow &win, Context &ctx, CommandQueue &q) {
-    PrimCL primCl(ctx);
-    SeqPrim seqPrim(ctx, primCl);
+    prim::PrimCL primCl(ctx);
+    prim::SeqPrim seqPrim(ctx, primCl);
+
+    boruvka::BoruvkaCL boruvkaCl(ctx);
+    boruvka::SeqBoruvka seqBoruvka(ctx, boruvkaCl);
 
     MazeRenderer renderer;
 
@@ -89,6 +93,8 @@ void maze(GlfwWindow &win, Context &ctx, CommandQueue &q) {
 
         if (glfwGetKey(win, GLFW_KEY_P) != GLFW_RELEASE)
             maze = &seqPrim, regenerate = true;
+        if (glfwGetKey(win, GLFW_KEY_B) != GLFW_RELEASE)
+            maze = &seqBoruvka, regenerate = true;
 
         if (regenerate)
             generateMazeAndUpdateTitle(win, maze, state, q);

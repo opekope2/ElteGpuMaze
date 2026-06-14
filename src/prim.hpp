@@ -22,6 +22,8 @@ typedef cl_uint2 Edge;
 
 using namespace cl;
 
+namespace prim {
+
 class PrimCL {
 private:
     Program primCl;
@@ -78,3 +80,4 @@ public:
         return {generate, render};
     }
 };
+}
