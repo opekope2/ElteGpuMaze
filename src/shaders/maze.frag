@@ -5,13 +5,15 @@ out vec4 FragColor;
 uniform usampler2D data;
 uniform ivec2 res;
 
-const uint WALL_TOP = 0x1u;
-const uint WALL_RIGHT = 0x2u;
-const uint WALL_BOTTOM = 0x4u;
-const uint WALL_LEFT = 0x8u;
+const uint WALL_TOP = 0x01u;
+const uint WALL_RIGHT = 0x02u;
+const uint WALL_BOTTOM = 0x04u;
+const uint WALL_LEFT = 0x08u;
+const uint DEBUG = 0x80u;
 
 const vec4 BLACK = vec4(0, 0, 0, 1);
 const vec4 WHITE = vec4(1, 1, 1, 1);
+const vec4 GREEN = vec4(0, 1, 0, 1);
 
 bool isWall(uint walls, uint wall) {
     return (walls & wall) != 0u;
@@ -32,8 +34,9 @@ void main() {
 
     bool wallAbove = thisCoords.y != aboveCoords.y && isWall(walls, WALL_TOP);
     bool wallLeft = thisCoords.x != leftCoords.x && isWall(walls, WALL_LEFT);
+    bool debug = isWall(walls, DEBUG);
     bool edge = thisCell.x == 0 || thisCell.y == 0 || thisCell.x == res.x - 1 || thisCell.y == res.y - 1;
     bool wall = wallAbove || wallLeft || edge;
 
-    FragColor = wall ? WHITE : BLACK;
+    FragColor = wall ? WHITE : (debug ? GREEN : BLACK);
 }
