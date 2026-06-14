@@ -1,10 +1,10 @@
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "Build",
-      "type": "shell",
-      "command": "${workspaceRoot}/build.sh debug"
-    }
-  ]
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build",
+            "type": "shell",
+            "command": "${workspaceRoot}/build.sh debug"
+        }
+    ]
 }
