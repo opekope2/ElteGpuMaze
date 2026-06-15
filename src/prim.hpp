@@ -33,7 +33,7 @@ public:
     KernelFunctor<Buffer, ImageGL> render;
 
     PrimCL(Context &ctx)
-        : primCl(buildProgram(ctx, cl::Program::Sources{XXD_STRING(set_cl), XXD_STRING(binary_heap_cl), XXD_STRING(prim_cl)})),
+        : primCl(buildProgram(ctx, cl::Program::Sources{XXD_STRING(maze_cl), XXD_STRING(set_cl), XXD_STRING(binary_heap_cl), XXD_STRING(prim_cl)})),
           seqPrim(primCl, "seqPrim"),
           render(primCl, "render") {}
 };
@@ -80,4 +80,4 @@ public:
         return {generate, render};
     }
 };
-}
+} // namespace prim

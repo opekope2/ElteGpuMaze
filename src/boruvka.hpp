@@ -7,7 +7,6 @@
 #include <CL/cl.h>
 #include <CL/cl_platform.h>
 #include <CL/opencl.hpp>
-#include <climits>
 
 #define WALL_TOP 0x1u
 #define WALL_RIGHT 0x2u
@@ -21,23 +20,6 @@ namespace boruvka {
 typedef cl_uint dsu_size_t;
 typedef cl_uint dsu_vertex_t;
 typedef cl_uint weight_t;
-
-cl_uint weight(cl_uint seed, dsu_vertex_t a, dsu_vertex_t b) {
-    cl_uint hash = seed;
-
-    // xxHash primes
-    hash ^= min(a, b) * 0x9e3779b1;
-    hash ^= max(a, b) * 0x85ebca77;
-
-    // xxHash avalanche
-    hash ^= hash >> 15;
-    hash *= 0x85ebca77;
-    hash ^= hash >> 13;
-    hash *= 0xc2b2ae3d;
-    hash ^= hash >> 16;
-
-    return hash;
-}
 
 typedef struct Edge {
     dsu_vertex_t u, v;
@@ -55,7 +37,7 @@ public:
     KernelFunctor<Buffer, ImageGL> render;
 
     BoruvkaCL(Context &ctx)
-        : boruvkaCl(buildProgram(ctx, cl::Program::Sources{XXD_STRING(dsu_cl), XXD_STRING(boruvka_cl)})),
+        : boruvkaCl(buildProgram(ctx, cl::Program::Sources{XXD_STRING(maze_cl), XXD_STRING(dsu_cl), XXD_STRING(boruvka_cl)})),
           seqBoruvka(boruvkaCl, "boruvka"),
           render(boruvkaCl, "render") {}
 

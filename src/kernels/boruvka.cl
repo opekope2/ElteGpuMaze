@@ -1,9 +1,3 @@
-#define WALL_TOP 0x01u
-#define WALL_RIGHT 0x02u
-#define WALL_BOTTOM 0x04u
-#define WALL_LEFT 0x08u
-#define DEBUG 0x80u
-
 kernel void boruvka(dsu_size_t n,
                     uint m,
                     global dsu_size_t *dsu_size,
