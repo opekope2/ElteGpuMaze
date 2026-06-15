@@ -62,11 +62,8 @@ void generateMazeAndUpdateTitle(GlfwWindow &win, MazeGenerator *maze, MazeState 
 }
 
 void maze(GlfwWindow &win, Context &ctx, CommandQueue &q) {
-    prim::PrimCL primCl(ctx);
-    prim::SeqPrim seqPrim(ctx, primCl);
-
-    boruvka::BoruvkaCL boruvkaCl(ctx);
-    boruvka::SeqBoruvka seqBoruvka(ctx, boruvkaCl);
+    prim::SequentialPrim seqPrim(ctx);
+    boruvka::SequentialBoruvka seqBoruvka(ctx);
 
     MazeRenderer renderer;
 
