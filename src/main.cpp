@@ -16,6 +16,7 @@
 #include <epoxy/gl.h>
 #include <format>
 #include <iostream>
+#include <vector>
 
 using namespace std;
 using namespace cl;
@@ -47,7 +48,8 @@ void handleInput(GLFWwindow *window, int key, int scancode, int action, int mods
 
 void generateMazeAndUpdateTitle(GlfwWindow &win, MazeGenerator *maze, MazeState &state, CommandQueue &q) {
     q.enqueueAcquireGLObjects(&state.glObjs());
-    auto events = maze->generateAndRender(q, state);
+    std::vector<Event> events;
+    maze->generateAndRender(q, state, events);
     q.enqueueReleaseGLObjects(&state.glObjs());
     q.finish();
 

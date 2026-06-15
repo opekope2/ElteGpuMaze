@@ -7,6 +7,7 @@
 #include <CL/cl.h>
 #include <CL/cl_platform.h>
 #include <CL/opencl.hpp>
+#include <vector>
 
 #define WALL_TOP 0x1u
 #define WALL_RIGHT 0x2u
@@ -41,8 +42,7 @@ public:
           seqBoruvka(boruvkaCl, "boruvka"),
           render(boruvkaCl, "render") {}
 
-    const std::vector<Edge> generateEdges(MazeState &state) {
-        std::vector<Edge> edges;
+    void generateEdges(MazeState &state, std::vector<Edge> &edges) {
         cl_uint w = state.width(), h = state.height(), s = state.seed();
         edges.reserve(2 * w * h - w - h);
         for (cl_uint j = 1; j < w; j++)
@@ -55,7 +55,6 @@ public:
                 edges.emplace_back(ij - 1, ij, s);
                 edges.emplace_back(ij - w, ij, s);
             }
-        return edges;
     }
 };
 
@@ -68,9 +67,10 @@ public:
 
     string name() override { return "Sequential Boruvka"; }
 
-    std::vector<Event> generateAndRender(CommandQueue &q, MazeState &state) override {
+    void generateAndRender(CommandQueue &q, MazeState &state, std::vector<Event> &events) override {
         size_type n = static_cast<size_type>(state.width()) * static_cast<size_type>(state.height());
-        auto edges_vector = boruvkaCl.generateEdges(state);
+        std::vector<Edge> edges_vector;
+        boruvkaCl.generateEdges(state, edges_vector);
 
         // Does not fit into local memory on moderately large mazes, which resets my GPU
         Buffer dsu_size(state.context(), CL_MEM_READ_WRITE, sizeof(dsu_size_t) * n);
@@ -94,7 +94,8 @@ public:
             state.mazeData(),
             state.glImage());
 
-        return {generate, render};
+        q.finish();
+        events.insert(events.end(), {generate, render});
     }
 };
 } // namespace boruvka
