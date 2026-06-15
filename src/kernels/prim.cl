@@ -22,7 +22,7 @@ kernel void seqPrim(uint width,
                     global Vertex *heap,
                     global Vertex *lookup,
                     global uint *priorities,
-                    global uchar *mazeData) {
+                    maze_data_t mazeData) {
     uint n = width * height;
     Heap h = {0, heap, lookup, priorities}; // TODO Fibonacci heap
 

@@ -2,6 +2,7 @@
 
 #include "../gen/kernels.hpp"
 #include "maze_generator.hpp"
+#include "maze_state.hpp"
 #include "util/cl.hpp"
 #include "util/misc.hpp"
 #include <CL/cl.h>
@@ -59,7 +60,7 @@ public:
 
         q.enqueueFillBuffer<Vertex>(cheapestEdge, VERTEX_INVALID, 0, sizeof(Vertex) * n);
         q.enqueueFillBuffer<cl_uchar>(unexplored, 1, 0, sizeof(cl_uchar) * n);
-        q.enqueueFillBuffer<cl_uchar>(state.mazeData(), WALL_TOP | WALL_RIGHT | WALL_BOTTOM | WALL_LEFT, 0, sizeof(cl_uchar) * n);
+        q.enqueueFillBuffer<maze_data_t>(state.mazeData(), WALL_TOP | WALL_RIGHT | WALL_BOTTOM | WALL_LEFT, 0, sizeof(maze_data_t) * n);
 
         Event generate = primCl.seqPrim(
             EnqueueArgs(q, NDRange(1)),

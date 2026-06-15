@@ -2,6 +2,7 @@
 
 #include "../gen/kernels.hpp"
 #include "maze_generator.hpp"
+#include "maze_state.hpp"
 #include "util/cl.hpp"
 #include "util/misc.hpp"
 #include <CL/cl.h>
@@ -78,7 +79,7 @@ public:
         Buffer minout(state.context(), CL_MEM_READ_WRITE, sizeof(cl_uint) * n);
         Buffer edges_buffer(state.context(), CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(Edge) * edges_vector.size(), edges_vector.data());
 
-        q.enqueueFillBuffer<cl_uchar>(state.mazeData(), WALL_TOP | WALL_RIGHT | WALL_BOTTOM | WALL_LEFT, 0, sizeof(cl_uchar) * n);
+        q.enqueueFillBuffer<maze_data_t>(state.mazeData(), WALL_TOP | WALL_RIGHT | WALL_BOTTOM | WALL_LEFT, 0, sizeof(maze_data_t) * n);
 
         Event generate = boruvkaCl.seqBoruvka(
             EnqueueArgs(q, NDRange(1)),

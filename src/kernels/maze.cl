@@ -5,6 +5,8 @@
 
 #define DEBUG 0x80u
 
+typedef global uchar *maze_data_t;
+
 uint weight(uint seed, uint a, uint b) {
     uint hash = seed;
 
@@ -22,7 +24,7 @@ uint weight(uint seed, uint a, uint b) {
     return hash;
 }
 
-kernel void render(global uchar *mazeData, write_only image2d_t tex) {
+kernel void render(maze_data_t mazeData, write_only image2d_t tex) {
     int x = get_global_id(0);
     int y = get_global_id(1);
     int w = get_global_size(0);

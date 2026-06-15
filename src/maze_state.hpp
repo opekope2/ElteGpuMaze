@@ -8,6 +8,8 @@
 
 using namespace cl;
 
+typedef cl_uchar maze_data_t;
+
 class MazeState {
 private:
     cl_uint _width;
@@ -55,7 +57,7 @@ public:
         _glImg = ImageGL(_ctx, CL_MEM_WRITE_ONLY, GL_TEXTURE_2D, 0, _tex);
         _glObjs[0] = _glImg;
 
-        _mazeData = Buffer(_ctx, CL_MEM_READ_WRITE, sizeof(cl_uchar) * width * height);
+        _mazeData = Buffer(_ctx, CL_MEM_READ_WRITE, sizeof(maze_data_t) * width * height);
     }
 
     void resize(cl_uint deltaWidth, cl_uint deltaHeight) { size(_width + deltaWidth, _height + deltaHeight); }
