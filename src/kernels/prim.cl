@@ -4,15 +4,6 @@ typedef uint Vertex;
 typedef uint4 Neighbors;
 typedef uint2 Edge;
 
-Neighbors getNeighbors(uint w, uint h, uint id) {
-    uint left = id % w == 0 ? VERTEX_INVALID : id - 1;
-    uint right = id % w == w - 1 ? VERTEX_INVALID : id + 1;
-    uint top = id < w ? VERTEX_INVALID : id - w;
-    uint bottom = id >= w * (h - 1) ? VERTEX_INVALID : id + w;
-
-    return (Neighbors)(left, right, top, bottom);
-}
-
 // TODO parallel
 kernel void seqPrim(uint width,
                     uint height,
@@ -22,7 +13,7 @@ kernel void seqPrim(uint width,
                     global Vertex *heap,
                     global Vertex *lookup,
                     global uint *priorities,
-                    maze_data_t mazeData) {
+                    maze_data_buffer_t mazeData) {
     uint n = width * height;
     Heap h = {0, heap, lookup, priorities}; // TODO Fibonacci heap
 

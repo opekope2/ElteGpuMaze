@@ -4,7 +4,7 @@ kernel void boruvka(dsu_size_t n,
                     global dsu_vertex_t *dsu_parent,
                     global uint *minout,
                     global Edge *e,
-                    maze_data_t maze_data) {
+                    maze_data_buffer_t maze_data) {
     DSU dsu = {n, dsu_size, dsu_parent};
     dsu_init(&dsu);
     dsu_size_t comp = n;

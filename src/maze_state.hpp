@@ -1,14 +1,13 @@
 #pragma once
 
 #include "util/gl.hpp"
+#include "util/maze.hpp"
 #include <CL/cl_platform.h>
 #include <CL/opencl.hpp>
 #include <utility>
 #include <vector>
 
 using namespace cl;
-
-typedef cl_uchar maze_data_t;
 
 class MazeState {
 private:

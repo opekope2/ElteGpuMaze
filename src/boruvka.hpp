@@ -4,16 +4,12 @@
 #include "maze_generator.hpp"
 #include "maze_state.hpp"
 #include "util/cl.hpp"
+#include "util/maze.hpp"
 #include "util/misc.hpp"
 #include <CL/cl.h>
 #include <CL/cl_platform.h>
 #include <CL/opencl.hpp>
 #include <vector>
-
-#define WALL_TOP 0x1u
-#define WALL_RIGHT 0x2u
-#define WALL_BOTTOM 0x4u
-#define WALL_LEFT 0x8u
 
 using namespace cl;
 
