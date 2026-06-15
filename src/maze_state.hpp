@@ -4,7 +4,6 @@
 #include "util/maze.hpp"
 #include <CL/cl_platform.h>
 #include <CL/opencl.hpp>
-#include <utility>
 #include <vector>
 
 using namespace cl;
@@ -14,7 +13,6 @@ private:
     cl_uint _width;
     cl_uint _height;
     cl_uint _seed;
-    bool _changed;
 
     Context &_ctx;
     GlTexture _tex;
@@ -31,7 +29,6 @@ public:
     cl_uint width() { return _width; }
     cl_uint height() { return _height; }
     cl_uint seed() { return _seed; }
-    bool changed() { return exchange(_changed, false); }
 
     GlTexture &texture() { return _tex; }
     ImageGL &glImage() { return _glImg; }
@@ -44,7 +41,6 @@ public:
 
         _width = width;
         _height = height;
-        _changed = true;
 
         // TODO don't recreate each time
         _tex = createTexture<GL_TEXTURE_2D>();
@@ -60,5 +56,5 @@ public:
 
     void resize(cl_uint deltaWidth, cl_uint deltaHeight) { size(_width + deltaWidth, _height + deltaHeight); }
 
-    void seed(cl_uint seed) { _seed = seed, _changed = true; }
+    void seed(cl_uint seed) { _seed = seed; }
 };
