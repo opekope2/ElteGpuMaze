@@ -52,7 +52,7 @@ _gen_shaders() (
 )
 
 _build() (
-    __run g++ -Wall -o "$OUT"/main "$@" ${CXXFLAGS[@]} "$SRC"/*.cpp "$SRC"/*/*.cpp "$GEN"/*.cpp
+    __run g++ -Wall -o "$OUT"/main "$@" ${CXXFLAGS[@]} "$SRC"/*.cpp "$GEN"/*.cpp
 )
 
 _gen_clangd() (
