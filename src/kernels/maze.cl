@@ -11,6 +11,7 @@
 
 #define NEIGHBOR_INVALID UINT_MAX
 
+typedef uint vertex_t;
 typedef uchar maze_data_t;
 typedef global maze_data_t *maze_data_buffer_t;
 

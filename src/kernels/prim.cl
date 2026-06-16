@@ -1,17 +1,13 @@
 #define VERTEX_INVALID UINT_MAX
 
-typedef uint Vertex;
-typedef uint4 Neighbors;
-typedef uint2 Edge;
-
 // TODO parallel
 kernel void seqPrim(uint width,
                     uint height,
                     uint seed,
-                    global Vertex *cheapestEdge,
+                    global vertex_t *cheapestEdge,
                     global uchar *unexplored,
-                    global Vertex *heap,
-                    global Vertex *lookup,
+                    global vertex_t *heap,
+                    global vertex_t *lookup,
                     global uint *priorities,
                     maze_data_buffer_t mazeData) {
     uint n = width * height;
@@ -20,17 +16,17 @@ kernel void seqPrim(uint width,
     for (uint i = 0; i < n; i++)
         heapInsert(&h, i, UINT_MAX);
 
-    Vertex startVertex = 0;
+    vertex_t startVertex = 0;
     heapDecrease(&h, startVertex, 0);
 
     while (h.size > 0) {
-        Vertex currentVertex = heapExtract(&h);
+        vertex_t currentVertex = heapExtract(&h);
 
         SET_REMOVE(unexplored, currentVertex);
 
-        Neighbors neighbors = getNeighbors(width, height, currentVertex);
+        uint4 neighbors = getNeighbors(width, height, currentVertex);
         for (uint i = 0; i < 4; i++) {
-            Vertex neighbor = neighbors[i];
+            vertex_t neighbor = neighbors[i];
             if (neighbor == VERTEX_INVALID)
                 continue;
 
@@ -42,12 +38,12 @@ kernel void seqPrim(uint width,
         }
     }
 
-    for (Vertex i = 0; i < n; i++) {
-        Vertex j = cheapestEdge[i];
+    for (vertex_t i = 0; i < n; i++) {
+        vertex_t j = cheapestEdge[i];
         if (j == VERTEX_INVALID)
             continue;
 
-        Vertex u = min(i, j), v = max(i, j);
+        vertex_t u = min(i, j), v = max(i, j);
 
         if (u == v - 1) { // Horizontal
             mazeData[u] &= ~WALL_RIGHT;
