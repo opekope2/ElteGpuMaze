@@ -13,4 +13,5 @@
 
 #define DEBUG 0x80u
 
+typedef cl_uint vertex_t;
 typedef cl_uchar maze_data_t;

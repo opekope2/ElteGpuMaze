@@ -2,6 +2,7 @@
 
 #include "util/gl.hpp"
 #include "util/maze.hpp"
+#include <CL/cl.h>
 #include <CL/cl_platform.h>
 #include <CL/opencl.hpp>
 #include <vector>
@@ -18,6 +19,8 @@ private:
     GlTexture _tex;
     ImageGL _glImg;
     std::vector<Memory> _glObjs;
+
+    Buffer _parent;
     Buffer _mazeData;
 
 public:
@@ -33,6 +36,8 @@ public:
     GlTexture &texture() { return _tex; }
     ImageGL &glImage() { return _glImg; }
     std::vector<Memory> &glObjs() { return _glObjs; }
+
+    Buffer &parent() { return _parent; }
     Buffer &mazeData() { return _mazeData; }
 
     void size(cl_uint width, cl_uint height) {
@@ -51,6 +56,7 @@ public:
         _glImg = ImageGL(_ctx, CL_MEM_WRITE_ONLY, GL_TEXTURE_2D, 0, _tex);
         _glObjs[0] = _glImg;
 
+        _parent = Buffer(_ctx, CL_MEM_READ_WRITE, sizeof(vertex_t) * width * height);
         _mazeData = Buffer(_ctx, CL_MEM_READ_WRITE, sizeof(maze_data_t) * width * height);
     }
 

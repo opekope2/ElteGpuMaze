@@ -3,6 +3,7 @@
 #include "maze_generator.hpp"
 #include "maze_manager.hpp"
 #include "maze_renderer.hpp"
+#include "maze_solver.hpp"
 #include "maze_state.hpp"
 #include "util/cl.hpp"
 #include "util/gl.hpp"
@@ -71,6 +72,8 @@ void handleInput(GLFWwindow *window, int key, int scancode, int action, int mods
         manager->generator(manager->sequentialPrim()), regenerate = true;
     if (key == GLFW_KEY_B && action != GLFW_RELEASE)
         manager->generator(manager->sequentialBoruvka()), regenerate = true;
+    if (key == GLFW_KEY_W && action != GLFW_RELEASE && !manager->solving() && !manager->solved())
+        manager->startSolving(manager->parallelBfs());
 
     if (seed)
         state.seed(seed + state.seed()), regenerate = true;
@@ -78,7 +81,7 @@ void handleInput(GLFWwindow *window, int key, int scancode, int action, int mods
         state.resize(dw, dh), regenerate = true;
 
     if (regenerate)
-        generateMazeAndUpdateTitle(window, manager);
+        generateMazeAndUpdateTitle(window, manager), manager->resetSolver(true);
 }
 
 void maze(GlfwWindow &win, Context &ctx, CommandQueue &q) {
@@ -101,6 +104,13 @@ void maze(GlfwWindow &win, Context &ctx, CommandQueue &q) {
 
         glfwSwapBuffers(win);
         glfwPollEvents();
+
+        if (manager.stepSolve()) {
+            cl_ulong solveNs = manager.solveNs();
+            cl_ulong solveMs = solveNs / 1'000'000;
+            cout << format("Solved {}x{} maze using {} in {}ms/{}ns", state.width(), state.height(), manager.solver()->name(), solveMs, solveNs) << endl;
+            manager.resetSolver(false);
+        }
     }
 }
 

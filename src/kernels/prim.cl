@@ -53,4 +53,6 @@ kernel void seqPrim(uint width,
             mazeData[v] &= ~WALL_TOP;
         }
     }
+
+    mazeData[0] |= SEARCH_FRONTIER;
 }
