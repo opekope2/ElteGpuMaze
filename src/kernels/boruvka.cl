@@ -4,7 +4,7 @@ kernel void boruvka(dsu_size_t n,
                     global dsu_vertex_t *dsu_parent,
                     global uint *minout,
                     global Edge *e,
-                    global uchar *maze_data) {
+                    maze_data_buffer_t maze_data) {
     DSU dsu = {n, dsu_size, dsu_parent};
     dsu_init(&dsu);
     dsu_size_t comp = n;
@@ -40,12 +40,6 @@ kernel void boruvka(dsu_size_t n,
             }
         }
     }
-}
 
-kernel void render(global uchar *mazeData, write_only image2d_t tex) {
-    int x = get_global_id(0);
-    int y = get_global_id(1);
-    int w = get_global_size(0);
-
-    write_imageui(tex, (int2)(x, y), (uint4)(mazeData[y * w + x], 0, 0, 0));
+    maze_data[0] |= SEARCH_FRONTIER;
 }

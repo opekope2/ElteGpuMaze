@@ -1,10 +1,10 @@
 #include "../gen/kernels.hpp"
 #include "../gen/shaders.hpp"
-#include "boruvka.hpp"
 #include "maze_generator.hpp"
+#include "maze_manager.hpp"
 #include "maze_renderer.hpp"
+#include "maze_solver.hpp"
 #include "maze_state.hpp"
-#include "prim.hpp"
 #include "util/cl.hpp"
 #include "util/gl.hpp"
 #include "util/glfw.hpp"
@@ -16,64 +16,83 @@
 #include <epoxy/gl.h>
 #include <format>
 #include <iostream>
+#include <vector>
 
 using namespace std;
 using namespace cl;
 
-void handleInput(GLFWwindow *window, int key, int scancode, int action, int mods) {
-    auto *state = static_cast<MazeState *>(glfwGetWindowUserPointer(window));
+cl_ulong generateMaze(MazeManager *manager) {
+    MazeGenerator *generator = manager->generator();
+    MazeState &state = manager->state();
+    CommandQueue &q = manager->queue();
+    std::vector<Event> events;
 
-    cl_uint dw = 0, dh = 0, seed = 0;
-
-    if (key == GLFW_KEY_LEFT && action != GLFW_RELEASE)
-        dw--;
-    if (key == GLFW_KEY_RIGHT && action != GLFW_RELEASE)
-        dw++;
-    if (key == GLFW_KEY_UP && action != GLFW_RELEASE)
-        dh++;
-    if (key == GLFW_KEY_DOWN && action != GLFW_RELEASE)
-        dh--;
-
-    if (key == GLFW_KEY_EQUAL && action != GLFW_RELEASE)
-        seed++;
-    if (key == GLFW_KEY_MINUS && action != GLFW_RELEASE)
-        seed--;
-
-    if (seed)
-        state->seed(seed + state->seed());
-    if (dw || dh)
-        state->resize(dw, dh);
-}
-
-void generateMazeAndUpdateTitle(GlfwWindow &win, MazeGenerator *maze, MazeState &state, CommandQueue &q) {
     q.enqueueAcquireGLObjects(&state.glObjs());
-    auto events = maze->generateAndRender(q, state);
+    generator->generateAndRender(q, state, events);
     q.enqueueReleaseGLObjects(&state.glObjs());
     q.finish();
 
-    auto generateNs = getProfilingTimeNs(events);
-    auto generateMs = generateNs / 1'000'000;
-    cout << format("Generated {}x{} maze using {} in {}ms/{}ns", state.width(), state.height(), maze->name(), generateMs, generateNs) << endl;
+    return getProfilingTimeNs(events);
+}
 
-    string title = format("{} [{}x{}@{}]", maze->name(), state.width(), state.height(), state.seed());
+void generateMazeAndUpdateTitle(GLFWwindow *win, MazeManager *manager) {
+    MazeGenerator *generator = manager->generator();
+    MazeState &state = manager->state();
+
+    cl_ulong generateNs = generateMaze(manager);
+    cl_ulong generateMs = generateNs / 1'000'000;
+    cout << format("Generated {}x{} maze using {} in {}ms/{}ns", state.width(), state.height(), generator->name(), generateMs, generateNs) << endl;
+
+    string title = format("{} [{}x{}@{}]", generator->name(), state.width(), state.height(), state.seed());
     glfwSetWindowTitle(win, title.c_str());
 }
 
+void handleInput(GLFWwindow *window, int key, int scancode, int action, int mods) {
+    auto *manager = static_cast<MazeManager *>(glfwGetWindowUserPointer(window));
+    auto &state = manager->state();
+
+    cl_uint dw = 0, dh = 0, seed = 0;
+    bool regenerate = false;
+
+    if (key == GLFW_KEY_LEFT && action != GLFW_RELEASE)
+        dw -= AMOUNT(mods);
+    if (key == GLFW_KEY_RIGHT && action != GLFW_RELEASE)
+        dw += AMOUNT(mods);
+    if (key == GLFW_KEY_UP && action != GLFW_RELEASE)
+        dh += AMOUNT(mods);
+    if (key == GLFW_KEY_DOWN && action != GLFW_RELEASE)
+        dh -= AMOUNT(mods);
+
+    if (key == GLFW_KEY_EQUAL && action != GLFW_RELEASE)
+        seed += AMOUNT(mods);
+    if (key == GLFW_KEY_MINUS && action != GLFW_RELEASE)
+        seed -= AMOUNT(mods);
+
+    if (key == GLFW_KEY_P && action != GLFW_RELEASE)
+        manager->generator(manager->sequentialPrim()), regenerate = true;
+    if (key == GLFW_KEY_B && action != GLFW_RELEASE)
+        manager->generator(manager->sequentialBoruvka()), regenerate = true;
+    if (key == GLFW_KEY_W && action != GLFW_RELEASE && !manager->solving() && !manager->solved())
+        manager->startSolving(manager->parallelBfs());
+
+    if (seed)
+        state.seed(seed + state.seed()), regenerate = true;
+    if (dw || dh)
+        state.resize(dw, dh), regenerate = true;
+
+    if (regenerate)
+        generateMazeAndUpdateTitle(window, manager), manager->resetSolver(true);
+}
+
 void maze(GlfwWindow &win, Context &ctx, CommandQueue &q) {
-    prim::PrimCL primCl(ctx);
-    prim::SeqPrim seqPrim(ctx, primCl);
-
-    boruvka::BoruvkaCL boruvkaCl(ctx);
-    boruvka::SeqBoruvka seqBoruvka(ctx, boruvkaCl);
-
     MazeRenderer renderer;
 
     MazeState state(ctx, 32, 32, 6 * 7);
+    MazeManager manager(ctx, q, state);
 
-    MazeGenerator *maze = &seqPrim;
-    generateMazeAndUpdateTitle(win, maze, state, q);
+    generateMazeAndUpdateTitle(win, &manager);
 
-    glfwSetWindowUserPointer(win, &state);
+    glfwSetWindowUserPointer(win, &manager);
     glfwSetKeyCallback(win, handleInput);
 
     while (!glfwWindowShouldClose(win)) {
@@ -86,18 +105,12 @@ void maze(GlfwWindow &win, Context &ctx, CommandQueue &q) {
         glfwSwapBuffers(win);
         glfwPollEvents();
 
-        bool regenerate = false;
-
-        if (state.changed())
-            regenerate = true;
-
-        if (glfwGetKey(win, GLFW_KEY_P) != GLFW_RELEASE)
-            maze = &seqPrim, regenerate = true;
-        if (glfwGetKey(win, GLFW_KEY_B) != GLFW_RELEASE)
-            maze = &seqBoruvka, regenerate = true;
-
-        if (regenerate)
-            generateMazeAndUpdateTitle(win, maze, state, q);
+        if (manager.stepSolve()) {
+            cl_ulong solveNs = manager.solveNs();
+            cl_ulong solveMs = solveNs / 1'000'000;
+            cout << format("Solved {}x{} maze using {} in {}ms/{}ns", state.width(), state.height(), manager.solver()->name(), solveMs, solveNs) << endl;
+            manager.resetSolver(false);
+        }
     }
 }
 

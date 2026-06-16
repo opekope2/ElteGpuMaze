@@ -15,5 +15,5 @@ public:
     MazeGenerator(Context &ctx) : ctx(ctx) {}
 
     virtual string name() = 0;
-    virtual std::vector<Event> generateAndRender(CommandQueue &q, MazeState &state) = 0;
+    virtual void generateAndRender(CommandQueue &q, MazeState &state, std::vector<Event> &events) = 0;
 };

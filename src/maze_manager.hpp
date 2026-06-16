@@ -1,0 +1,75 @@
+#pragma once
+
+#include "bfs.hpp"
+#include "boruvka.hpp"
+#include "maze_generator.hpp"
+#include "maze_solver.hpp"
+#include "maze_state.hpp"
+#include "prim.hpp"
+#include "util/cl.hpp"
+#include <CL/cl_platform.h>
+#include <CL/opencl.hpp>
+#include <vector>
+
+using namespace std;
+using namespace cl;
+
+class MazeManager {
+private:
+    CommandQueue &_q;
+
+    MazeState &_state;
+
+    prim::SequentialPrim _seqPrim;
+    boruvka::SequentialBoruvka _seqBoruvka;
+    MazeGenerator *_generator = &_seqPrim;
+
+    bfs::ParallelBFS _parBfs;
+    MazeSolver *_solver = nullptr;
+
+    bool _solved = false;
+    cl_ulong _solveNs = 0;
+
+public:
+    MazeManager(Context &ctx, CommandQueue &q, MazeState &state)
+        : _q(q),
+          _state(state),
+          _seqPrim(ctx),
+          _seqBoruvka(ctx),
+          _parBfs(ctx) {}
+
+    CommandQueue &queue() { return _q; }
+
+    MazeState &state() { return _state; }
+
+    MazeGenerator *sequentialPrim() { return &_seqPrim; }
+    MazeGenerator *sequentialBoruvka() { return &_seqBoruvka; }
+    MazeGenerator *generator() { return _generator; }
+
+    void generator(MazeGenerator *gen) { _generator = gen; }
+
+    MazeSolver *parallelBfs() { return &_parBfs; }
+    MazeSolver *solver() { return _solver; }
+
+    void startSolving(MazeSolver *solver) { _solver = solver; }
+
+    bool solved() { return _solved; }
+    bool solving() { return _solver != nullptr; }
+    cl_ulong solveNs() { return _solveNs; }
+
+    bool stepSolve() {
+        if (_solved || !solving())
+            return false;
+
+        std::vector<Event> events;
+        bool done = _solver->stepSolve(_q, _state, events);
+        _solveNs += getProfilingTimeNs(events);
+
+        if (done)
+            _solved = true;
+
+        return done;
+    }
+
+    void resetSolver(bool resetSolved) { _solved &= !resetSolved, _solver = nullptr, _solveNs = 0; }
+};

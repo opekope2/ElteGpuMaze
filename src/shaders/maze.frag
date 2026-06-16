@@ -9,14 +9,24 @@ const uint WALL_TOP = 0x01u;
 const uint WALL_RIGHT = 0x02u;
 const uint WALL_BOTTOM = 0x04u;
 const uint WALL_LEFT = 0x08u;
+
+const uint SEARCH_EXPLORED = 0x10u;
+const uint SEARCH_FRONTIER = 0x20u;
+const uint SEARCH_PATH = 0x40u;
+
 const uint DEBUG = 0x80u;
 
 const vec4 BLACK = vec4(0, 0, 0, 1);
-const vec4 WHITE = vec4(1, 1, 1, 1);
+const vec4 RED = vec4(1, 0, 0, 1);
 const vec4 GREEN = vec4(0, 1, 0, 1);
+const vec4 BLUE = vec4(0, 0, 1, 1);
+const vec4 CYAN = vec4(0, 1, 1, 1);
+const vec4 MAGENTA = vec4(1, 0, 1, 0);
+const vec4 YELLOW = vec4(1, 1, 0, 1);
+const vec4 WHITE = vec4(1, 1, 1, 1);
 
-bool isWall(uint walls, uint wall) {
-    return (walls & wall) != 0u;
+bool hasFlag(uint value, uint flag) {
+    return (value & flag) != 0u;
 }
 
 void main() {
@@ -30,13 +40,28 @@ void main() {
     ivec2 aboveCoords = ivec2(aboveCell * scale);
     ivec2 leftCoords = ivec2(leftCell * scale);
 
-    uint walls = texelFetch(data, thisCoords, 0).x;
+    uint mazeData = texelFetch(data, thisCoords, 0).x;
 
-    bool wallAbove = thisCoords.y != aboveCoords.y && isWall(walls, WALL_TOP);
-    bool wallLeft = thisCoords.x != leftCoords.x && isWall(walls, WALL_LEFT);
-    bool debug = isWall(walls, DEBUG);
+    bool explored = hasFlag(mazeData, SEARCH_EXPLORED);
+    bool frontier = hasFlag(mazeData, SEARCH_FRONTIER);
+    bool path = hasFlag(mazeData, SEARCH_PATH);
+    bool debug = hasFlag(mazeData, DEBUG);
+
+    bool wallAbove = thisCoords.y != aboveCoords.y && hasFlag(mazeData, WALL_TOP);
+    bool wallLeft = thisCoords.x != leftCoords.x && hasFlag(mazeData, WALL_LEFT);
     bool edge = thisCell.x == 0 || thisCell.y == 0 || thisCell.x == res.x - 1 || thisCell.y == res.y - 1;
     bool wall = wallAbove || wallLeft || edge;
 
-    FragColor = wall ? WHITE : (debug ? GREEN : BLACK);
+    if (wall)
+        FragColor = WHITE;
+    else if (path)
+        FragColor = CYAN;
+    else if (frontier)
+        FragColor = YELLOW;
+    else if (explored)
+        FragColor = BLUE;
+    else if (debug)
+        FragColor = MAGENTA;
+    else
+        FragColor = BLACK;
 }

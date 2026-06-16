@@ -1,9 +1,10 @@
 #pragma once
 
 #include "util/gl.hpp"
+#include "util/maze.hpp"
+#include <CL/cl.h>
 #include <CL/cl_platform.h>
 #include <CL/opencl.hpp>
-#include <utility>
 #include <vector>
 
 using namespace cl;
@@ -13,12 +14,13 @@ private:
     cl_uint _width;
     cl_uint _height;
     cl_uint _seed;
-    bool _changed;
 
     Context &_ctx;
     GlTexture _tex;
     ImageGL _glImg;
     std::vector<Memory> _glObjs;
+
+    Buffer _parent;
     Buffer _mazeData;
 
 public:
@@ -30,12 +32,12 @@ public:
     cl_uint width() { return _width; }
     cl_uint height() { return _height; }
     cl_uint seed() { return _seed; }
-    bool changed() { return exchange(_changed, false); }
 
-    Context &context() { return _ctx; }
     GlTexture &texture() { return _tex; }
     ImageGL &glImage() { return _glImg; }
     std::vector<Memory> &glObjs() { return _glObjs; }
+
+    Buffer &parent() { return _parent; }
     Buffer &mazeData() { return _mazeData; }
 
     void size(cl_uint width, cl_uint height) {
@@ -44,7 +46,6 @@ public:
 
         _width = width;
         _height = height;
-        _changed = true;
 
         // TODO don't recreate each time
         _tex = createTexture<GL_TEXTURE_2D>();
@@ -55,10 +56,11 @@ public:
         _glImg = ImageGL(_ctx, CL_MEM_WRITE_ONLY, GL_TEXTURE_2D, 0, _tex);
         _glObjs[0] = _glImg;
 
-        _mazeData = Buffer(_ctx, CL_MEM_READ_WRITE, sizeof(cl_uchar) * width * height);
+        _parent = Buffer(_ctx, CL_MEM_READ_WRITE, sizeof(vertex_t) * width * height);
+        _mazeData = Buffer(_ctx, CL_MEM_READ_WRITE, sizeof(maze_data_t) * width * height);
     }
 
     void resize(cl_uint deltaWidth, cl_uint deltaHeight) { size(_width + deltaWidth, _height + deltaHeight); }
 
-    void seed(cl_uint seed) { _seed = seed, _changed = true; }
+    void seed(cl_uint seed) { _seed = seed; }
 };
