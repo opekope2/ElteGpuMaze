@@ -55,18 +55,18 @@ void handleInput(GLFWwindow *window, int key, int scancode, int action, int mods
     bool regenerate = false;
 
     if (key == GLFW_KEY_LEFT && action != GLFW_RELEASE)
-        dw--;
+        dw -= AMOUNT(mods);
     if (key == GLFW_KEY_RIGHT && action != GLFW_RELEASE)
-        dw++;
+        dw += AMOUNT(mods);
     if (key == GLFW_KEY_UP && action != GLFW_RELEASE)
-        dh++;
+        dh += AMOUNT(mods);
     if (key == GLFW_KEY_DOWN && action != GLFW_RELEASE)
-        dh--;
+        dh -= AMOUNT(mods);
 
     if (key == GLFW_KEY_EQUAL && action != GLFW_RELEASE)
-        seed++;
+        seed += AMOUNT(mods);
     if (key == GLFW_KEY_MINUS && action != GLFW_RELEASE)
-        seed--;
+        seed -= AMOUNT(mods);
 
     if (key == GLFW_KEY_P && action != GLFW_RELEASE)
         manager->generator(manager->sequentialPrim()), regenerate = true;
