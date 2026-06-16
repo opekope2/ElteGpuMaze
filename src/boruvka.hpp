@@ -23,7 +23,7 @@ typedef struct Edge {
     dsu_vertex_t u, v;
     weight_t w;
 
-    Edge(dsu_vertex_t u, dsu_vertex_t v, cl_uint seed) : u(u), v(v), w(weight(seed, u, v)) {}
+    Edge(dsu_vertex_t u, dsu_vertex_t v, cl_uint stride, cl_uint seed) : u(u), v(v), w(weight(seed, stride, u, v)) {}
 } Edge;
 
 class SequentialBoruvka : public MazeGenerator {
@@ -45,14 +45,14 @@ public:
         cl_uint w = state.width(), h = state.height(), s = state.seed();
         edges.reserve(2 * w * h - w - h);
         for (cl_uint j = 1; j < w; j++)
-            edges.emplace_back(j - 1, j, s);
+            edges.emplace_back(j - 1, j, w, s);
         for (cl_uint i = 1; i < h; i++)
-            edges.emplace_back((i - 1) * w, i * w, s);
+            edges.emplace_back((i - 1) * w, i * w, w, s);
         for (cl_uint i = 1; i < h; i++)
             for (cl_uint j = 1; j < w; j++) {
                 cl_uint ij = i * w + j;
-                edges.emplace_back(ij - 1, ij, s);
-                edges.emplace_back(ij - w, ij, s);
+                edges.emplace_back(ij - 1, ij, w, s);
+                edges.emplace_back(ij - w, ij, w, s);
             }
     }
 

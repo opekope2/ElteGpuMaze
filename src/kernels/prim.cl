@@ -30,7 +30,7 @@ kernel void seqPrim(uint width,
             if (neighbor == VERTEX_INVALID)
                 continue;
 
-            uint w = weight(seed, currentVertex, neighbor);
+            uint w = weight(seed, width, currentVertex, neighbor);
             if (SET_CONTAINS(unexplored, neighbor) && w < heapPriority(&h, neighbor)) {
                 cheapestEdge[neighbor] = currentVertex;
                 heapDecrease(&h, neighbor, w);
