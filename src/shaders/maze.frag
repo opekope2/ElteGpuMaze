@@ -52,7 +52,7 @@ void main() {
     uint mazeData = insideNW && insideSE ? texelFetch(data, mazeCoord, 0).x : 0u;
 
     bvec2 wallCoord = equal(cellCoord % cellSize, ivec2(0));
-    bool wall = wallCoord.x && HAS_FLAGS(mazeData, WALL_LEFT) || wallCoord.y && HAS_FLAGS(mazeData, WALL_TOP) || edgeSE;
+    bool wall = wallCoord.x && HAS_FLAGS(mazeData, WALL_LEFT) || wallCoord.y && HAS_FLAGS(mazeData, WALL_TOP) || all(wallCoord) && insideNW && insideSE || edgeSE;
 
     if (wall)
         FragColor = WHITE;
