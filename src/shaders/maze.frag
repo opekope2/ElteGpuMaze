@@ -1,5 +1,7 @@
 #version 330 core
 
+#define HAS_FLAGS(v, f) ((v & f) == f)
+
 layout(origin_upper_left, pixel_center_integer) in vec4 gl_FragCoord;
 out vec4 FragColor;
 uniform usampler2D data;
@@ -25,42 +27,42 @@ const vec4 MAGENTA = vec4(1, 0, 1, 0);
 const vec4 YELLOW = vec4(1, 1, 0, 1);
 const vec4 WHITE = vec4(1, 1, 1, 1);
 
-bool hasFlag(uint value, uint flag) {
-    return (value & flag) != 0u;
-}
-
 void main() {
-    vec2 scale = vec2(textureSize(data, 0)) / vec2(res);
+    ivec2 adjustedRes = res - ivec2(1);
+    ivec2 size = textureSize(data, 0);
+    ivec2 minSize = size * ivec2(2);
 
-    vec2 thisCell = gl_FragCoord.xy;
-    vec2 aboveCell = thisCell - vec2(0, 1);
-    vec2 leftCell = thisCell - vec2(1, 0);
+    if (any(lessThan(adjustedRes, minSize))) {
+        FragColor = RED;
+        return;
+    }
 
-    ivec2 thisCoords = ivec2(thisCell * scale);
-    ivec2 aboveCoords = ivec2(aboveCell * scale);
-    ivec2 leftCoords = ivec2(leftCell * scale);
+    ivec2 cellSize = adjustedRes / size;
+    cellSize = ivec2(min(cellSize.x, cellSize.y));
+    ivec2 offset = (adjustedRes - cellSize * size) / 2;
+    ivec2 mazeSize = size * cellSize;
 
-    uint mazeData = texelFetch(data, thisCoords, 0).x;
+    ivec2 cellCoord = ivec2(gl_FragCoord.xy) - offset;
 
-    bool explored = hasFlag(mazeData, SEARCH_EXPLORED);
-    bool frontier = hasFlag(mazeData, SEARCH_FRONTIER);
-    bool path = hasFlag(mazeData, SEARCH_PATH);
-    bool debug = hasFlag(mazeData, DEBUG);
+    bool insideNW = all(greaterThanEqual(cellCoord, ivec2(0)));
+    bool insideSE = all(lessThan(cellCoord, mazeSize));
+    bool edgeSE = insideNW && !insideSE && all(lessThanEqual(cellCoord, mazeSize));
 
-    bool wallAbove = thisCoords.y != aboveCoords.y && hasFlag(mazeData, WALL_TOP);
-    bool wallLeft = thisCoords.x != leftCoords.x && hasFlag(mazeData, WALL_LEFT);
-    bool edge = thisCell.x == 0 || thisCell.y == 0 || thisCell.x == res.x - 1 || thisCell.y == res.y - 1;
-    bool wall = wallAbove || wallLeft || edge;
+    ivec2 mazeCoord = cellCoord / cellSize;
+    uint mazeData = insideNW && insideSE ? texelFetch(data, mazeCoord, 0).x : 0u;
+
+    bvec2 wallCoord = equal(cellCoord % cellSize, ivec2(0));
+    bool wall = wallCoord.x && HAS_FLAGS(mazeData, WALL_LEFT) || wallCoord.y && HAS_FLAGS(mazeData, WALL_TOP) || edgeSE;
 
     if (wall)
         FragColor = WHITE;
-    else if (path)
+    else if (HAS_FLAGS(mazeData, SEARCH_PATH))
         FragColor = CYAN;
-    else if (frontier)
+    else if (HAS_FLAGS(mazeData, SEARCH_FRONTIER))
         FragColor = YELLOW;
-    else if (explored)
+    else if (HAS_FLAGS(mazeData, SEARCH_EXPLORED))
         FragColor = BLUE;
-    else if (debug)
+    else if (HAS_FLAGS(mazeData, DEBUG))
         FragColor = MAGENTA;
     else
         FragColor = BLACK;

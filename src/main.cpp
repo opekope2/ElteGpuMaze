@@ -116,7 +116,7 @@ void maze(GlfwWindow &win, Context &ctx, CommandQueue &q) {
 
 int main(int argc, char **argv) {
     try {
-        auto win = Glfw::instance().createWindow(800, 480, argv[0], nullptr, nullptr);
+        auto win = Glfw::instance().createWindow(1440, 900, argv[0], nullptr, nullptr);
         glfwMakeContextCurrent(win);
 
         // TODO handle multiple platforms, multiple devices
