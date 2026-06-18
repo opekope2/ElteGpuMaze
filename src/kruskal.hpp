@@ -1,0 +1,75 @@
+#pragma once
+
+#include "bfs.hpp"
+#include "maze_generator.hpp"
+#include "util/bitonic_sort.hpp"
+#include "util/cl.hpp"
+#include "util/dsu.hpp"
+#include "util/misc.hpp"
+#include <CL/cl.h>
+#include <CL/cl_platform.h>
+#include <CL/opencl.hpp>
+#include <climits>
+#include <vector>
+
+using namespace cl;
+
+namespace kruskal {
+
+class ParallelSortedKruskal : public MazeGenerator {
+private:
+    Program program;
+    KernelFunctor<cl_uint, Buffer> generateEdges;
+    KernelFunctor<dsu_size_t, dsu_size_t, Buffer> bitonicSwap;
+    KernelFunctor<dsu_size_t, cl_uint, Buffer, Buffer, Buffer, Buffer> kruskal;
+    KernelFunctor<Buffer, ImageGL> render;
+
+public:
+    ParallelSortedKruskal(Context &ctx)
+        : MazeGenerator(ctx),
+          program(buildProgram(ctx, cl::Program::Sources{XXD_STRING(maze_cl), XXD_STRING(dsu_cl), XXD_STRING(bitonic_sort_cl), XXD_STRING(kruskal_cl)})),
+          generateEdges(program, "generateEdges"),
+          bitonicSwap(program, "bitonicSwap"),
+          kruskal(program, "kruskal"),
+          render(program, "render") {}
+
+    string name() override { return "Parallel-Sorted Kruskal"; }
+
+    void generateAndRender(CommandQueue &q, MazeState &state, std::vector<Event> &events) override {
+        size_type n = static_cast<size_type>(state.width()) * static_cast<size_type>(state.height());
+        dsu_size_t m = 2 * state.width() * state.height() - state.width() - state.height();
+        dsu_size_t m2 = nextPowerOf2(m);
+
+        // Does not fit into local memory on moderately large mazes, which resets my GPU
+        Buffer dsuSize(ctx, CL_MEM_READ_WRITE, sizeof(dsu_size_t) * n);
+        Buffer dsuParent(ctx, CL_MEM_READ_WRITE, sizeof(dsu_vertex_t) * n);
+        Buffer edges(ctx, CL_MEM_READ_WRITE, sizeof(Edge) * m2);
+
+        q.enqueueFillBuffer<cl_uint>(edges, UINT_MAX, sizeof(Edge) * m, sizeof(Edge) * (m2 - m));
+        q.enqueueFillBuffer<maze_data_t>(state.mazeData(), WALL_TOP | WALL_RIGHT | WALL_BOTTOM | WALL_LEFT, 0, sizeof(maze_data_t) * n);
+
+        Event generateEdgesEvent = generateEdges(
+            EnqueueArgs(q, NDRange(state.width(), state.height())),
+            state.seed(),
+            edges);
+        events.push_back(generateEdgesEvent);
+        parallelBitonicMergeSort(q, bitonicSwap, m2, edges, events);
+        Event generateEvent = kruskal(
+            EnqueueArgs(q, NDRange(1)),
+            n,
+            m2,
+            dsuSize,
+            dsuParent,
+            edges,
+            state.mazeData());
+        Event renderEvent = render(
+            EnqueueArgs(q, NDRange(state.width(), state.height())),
+            state.mazeData(),
+            state.glImage());
+
+        q.finish();
+        events.insert(events.end(), {generateEvent, renderEvent});
+    }
+};
+
+} // namespace kruskal
