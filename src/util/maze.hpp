@@ -2,6 +2,7 @@
 
 #include <CL/cl_platform.h>
 #include <algorithm>
+#include <climits>
 
 #define WALL_TOP 0x01u
 #define WALL_RIGHT 0x02u
@@ -13,6 +14,8 @@
 #define SEARCH_PATH 0x40u
 
 #define DEBUG 0x80u
+
+#define VERTEX_INVALID UINT_MAX
 
 typedef cl_uint vertex_t;
 typedef cl_uchar maze_data_t;

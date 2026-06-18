@@ -1,23 +1,24 @@
-#define HEAP_TYPE uint
-#define HEAP_TYPE_INVALID UINT_MAX
-#define HEAP_MISSING UINT_MAX
+typedef uint heap_data_t;
 
 typedef struct Heap {
     uint size;
-    global HEAP_TYPE *heap, *lookup;
+    global heap_data_t *heap, *lookup;
     global uint *priorities;
 } Heap;
+
+#define HEAP_INVALID UINT_MAX
+#define HEAP_MISSING UINT_MAX
 
 #define HEAP_PARENT(i) (i - 1) / 2
 #define HEAP_CHILD1(i) 2 * i + 1
 #define HEAP_CHILD2(i) 2 * i + 2
 
 void upHeap(Heap *heap, uint i) {
-    global HEAP_TYPE *h = heap->heap, *lut = heap->lookup;
+    global heap_data_t *h = heap->heap, *lut = heap->lookup;
     global uint *prio = heap->priorities;
 
     uint p = HEAP_PARENT(i);
-    HEAP_TYPE key = h[i];
+    heap_data_t key = h[i];
     uint priority = prio[i];
 
     while (i > 0 && priority < prio[p]) {
@@ -37,12 +38,12 @@ void upHeap(Heap *heap, uint i) {
 }
 
 void downHeap(Heap *heap, uint i) {
-    global HEAP_TYPE *h = heap->heap, *lut = heap->lookup;
+    global heap_data_t *h = heap->heap, *lut = heap->lookup;
     global uint *prio = heap->priorities;
     uint size = heap->size;
 
     uint c1 = HEAP_CHILD1(i), c2 = HEAP_CHILD2(i);
-    HEAP_TYPE key = h[i];
+    heap_data_t key = h[i];
     uint priority = prio[i];
 
     while ((c1 < size && prio[c1] < priority) || (c2 < size && prio[c2] < priority)) {
@@ -63,7 +64,7 @@ void downHeap(Heap *heap, uint i) {
     }
 }
 
-void heapInsert(Heap *heap, HEAP_TYPE key, uint priority) {
+void heapInsert(Heap *heap, heap_data_t key, uint priority) {
     uint i = heap->size++;
     heap->heap[i] = key;
     heap->priorities[i] = priority;
@@ -72,14 +73,14 @@ void heapInsert(Heap *heap, HEAP_TYPE key, uint priority) {
     upHeap(heap, i);
 }
 
-HEAP_TYPE heapExtract(Heap *heap) {
-    global HEAP_TYPE *h = heap->heap, *lut = heap->lookup;
+heap_data_t heapExtract(Heap *heap) {
+    global heap_data_t *h = heap->heap, *lut = heap->lookup;
     global uint *prio = heap->priorities;
 
     if (heap->size == 0)
-        return HEAP_TYPE_INVALID;
+        return HEAP_INVALID;
 
-    HEAP_TYPE root = h[0];
+    heap_data_t root = h[0];
 
     // Move last to root
     h[0] = h[--heap->size];
@@ -87,7 +88,7 @@ HEAP_TYPE heapExtract(Heap *heap) {
     lut[h[0]] = 0;
 
     // Clear last
-    h[heap->size] = HEAP_TYPE_INVALID;
+    h[heap->size] = HEAP_INVALID;
     prio[heap->size] = UINT_MAX;
     lut[root] = HEAP_MISSING;
 
@@ -96,11 +97,11 @@ HEAP_TYPE heapExtract(Heap *heap) {
     return root;
 }
 
-bool heapContains(Heap *heap, HEAP_TYPE key) {
+bool heapContains(Heap *heap, heap_data_t key) {
     return heap->lookup[key] != HEAP_MISSING;
 }
 
-uint heapPriority(Heap *heap, HEAP_TYPE key) {
+uint heapPriority(Heap *heap, heap_data_t key) {
     if (!heapContains(heap, key))
         return UINT_MAX;
 
@@ -108,7 +109,7 @@ uint heapPriority(Heap *heap, HEAP_TYPE key) {
     return heap->priorities[i];
 }
 
-void heapDecrease(Heap *heap, HEAP_TYPE key, uint priority) {
+void heapDecrease(Heap *heap, heap_data_t key, uint priority) {
     if (!heapContains(heap, key))
         return;
 

@@ -9,17 +9,10 @@
 #include <CL/cl.h>
 #include <CL/cl_platform.h>
 #include <CL/opencl.hpp>
-#include <climits>
 
 using namespace cl;
 
 namespace prim {
-
-#define VERTEX_INVALID UINT_MAX
-
-typedef cl_uint Vertex;
-typedef cl_uint4 Neighbors;
-typedef cl_uint2 Edge;
 
 class SequentialPrim : public MazeGenerator {
 private:
@@ -40,13 +33,13 @@ public:
         size_type n = static_cast<size_type>(state.width()) * static_cast<size_type>(state.height());
 
         // Does not fit into local memory on moderately large mazes, which resets my GPU
-        Buffer cheapestEdge(ctx, CL_MEM_READ_WRITE, sizeof(Vertex) * n);
+        Buffer cheapestEdge(ctx, CL_MEM_READ_WRITE, sizeof(vertex_t) * n);
         Buffer unexplored(ctx, CL_MEM_READ_WRITE, sizeof(cl_uchar) * n);
-        Buffer heap(ctx, CL_MEM_READ_WRITE, sizeof(Vertex) * n);
-        Buffer lookup(ctx, CL_MEM_READ_WRITE, sizeof(Vertex) * n);
+        Buffer heap(ctx, CL_MEM_READ_WRITE, sizeof(vertex_t) * n);
+        Buffer lookup(ctx, CL_MEM_READ_WRITE, sizeof(vertex_t) * n);
         Buffer priorities(ctx, CL_MEM_READ_WRITE, sizeof(cl_uint) * n);
 
-        q.enqueueFillBuffer<Vertex>(cheapestEdge, VERTEX_INVALID, 0, sizeof(Vertex) * n);
+        q.enqueueFillBuffer<vertex_t>(cheapestEdge, VERTEX_INVALID, 0, sizeof(vertex_t) * n);
         q.enqueueFillBuffer<cl_uchar>(unexplored, 1, 0, sizeof(cl_uchar) * n);
         q.enqueueFillBuffer<maze_data_t>(state.mazeData(), WALL_TOP | WALL_RIGHT | WALL_BOTTOM | WALL_LEFT, 0, sizeof(maze_data_t) * n);
 

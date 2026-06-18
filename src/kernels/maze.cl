@@ -9,6 +9,7 @@
 
 #define DEBUG 0x80u
 
+#define VERTEX_INVALID UINT_MAX
 #define NEIGHBOR_INVALID UINT_MAX
 
 typedef uint vertex_t;

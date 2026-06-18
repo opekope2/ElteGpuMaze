@@ -4,6 +4,7 @@
 #include "maze_generator.hpp"
 #include "maze_state.hpp"
 #include "util/cl.hpp"
+#include "util/dsu.hpp"
 #include "util/maze.hpp"
 #include "util/misc.hpp"
 #include <CL/cl.h>
@@ -15,16 +16,8 @@ using namespace cl;
 
 namespace boruvka {
 
-typedef cl_uint dsu_size_t;
-typedef cl_uint dsu_vertex_t;
-typedef cl_uint weight_t;
-
-typedef struct Edge {
-    dsu_vertex_t u, v;
-    weight_t w;
-
-    Edge(dsu_vertex_t u, dsu_vertex_t v, cl_uint stride, cl_uint seed) : u(u), v(v), w(weight(seed, stride, u, v)) {}
-} Edge;
+#define EMPLACE_EDGE(vector, u, v, stride, seed) \
+    vector.emplace_back(u, v, weight(seed, stride, u, v))
 
 class SequentialBoruvka : public MazeGenerator {
 private:
@@ -45,14 +38,14 @@ public:
         cl_uint w = state.width(), h = state.height(), s = state.seed();
         edges.reserve(2 * w * h - w - h);
         for (cl_uint j = 1; j < w; j++)
-            edges.emplace_back(j - 1, j, w, s);
+            EMPLACE_EDGE(edges, j - 1, j, w, s);
         for (cl_uint i = 1; i < h; i++)
-            edges.emplace_back((i - 1) * w, i * w, w, s);
+            EMPLACE_EDGE(edges, (i - 1) * w, i * w, w, s);
         for (cl_uint i = 1; i < h; i++)
             for (cl_uint j = 1; j < w; j++) {
                 cl_uint ij = i * w + j;
-                edges.emplace_back(ij - 1, ij, w, s);
-                edges.emplace_back(ij - w, ij, w, s);
+                EMPLACE_EDGE(edges, ij - 1, ij, w, s);
+                EMPLACE_EDGE(edges, ij - w, ij, w, s);
             }
     }
 

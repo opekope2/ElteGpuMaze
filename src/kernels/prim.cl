@@ -1,5 +1,3 @@
-#define VERTEX_INVALID UINT_MAX
-
 // TODO parallel
 kernel void seqPrim(uint width,
                     uint height,
