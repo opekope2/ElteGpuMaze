@@ -2,23 +2,15 @@
 
 #include <CL/cl_platform.h>
 #include <CL/opencl.hpp>
-#include <algorithm>
 #include <utility>
 #include <vector>
 
-template <cl_profiling_info name>
-bool compareEventsBy(cl::Event lhs, cl::Event rhs) {
-    return lhs.getProfilingInfo<name>() < rhs.getProfilingInfo<name>();
-}
-
 inline cl_ulong getProfilingTimeNs(std::vector<cl::Event> &events) {
-    if (events.empty())
-        return 0;
+    cl_ulong ns = 0;
+    for (auto &&e : events)
+        ns += e.getProfilingInfo<CL_PROFILING_COMMAND_END>() - e.getProfilingInfo<CL_PROFILING_COMMAND_START>();
 
-    auto start = std::min_element(events.begin(), events.end(), compareEventsBy<CL_PROFILING_COMMAND_START>);
-    auto end = std::min_element(events.begin(), events.end(), compareEventsBy<CL_PROFILING_COMMAND_END>);
-
-    return end->getProfilingInfo<CL_PROFILING_COMMAND_END>() - start->getProfilingInfo<CL_PROFILING_COMMAND_START>();
+    return ns;
 }
 
 // Because Program doesn't have a constructor that accepts multiple sources while also builds it
