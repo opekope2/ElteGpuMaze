@@ -77,6 +77,9 @@ void handleInput(GLFWwindow *window, int key, int scancode, int action, int mods
     if (key == GLFW_KEY_W && action != GLFW_RELEASE && !manager->solving() && !manager->solved())
         manager->startSolving(manager->parallelBfs());
 
+    if (key == GLFW_KEY_Q && action != GLFW_RELEASE)
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
+
     if (seed)
         state.seed(seed + state.seed()), regenerate = true;
     if (dw || dh)
