@@ -70,6 +70,8 @@ void handleInput(GLFWwindow *window, int key, int scancode, int action, int mods
 
     if (key == GLFW_KEY_P && action != GLFW_RELEASE)
         manager->generator(manager->sequentialPrim()), regenerate = true;
+    if (key == GLFW_KEY_K && action != GLFW_RELEASE)
+        manager->generator(manager->parallelSortedKruskal()), regenerate = true;
     if (key == GLFW_KEY_B && action != GLFW_RELEASE)
         manager->generator(manager->sequentialBoruvka()), regenerate = true;
     if (key == GLFW_KEY_W && action != GLFW_RELEASE && !manager->solving() && !manager->solved())

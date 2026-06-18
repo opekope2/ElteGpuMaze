@@ -2,6 +2,7 @@
 
 #include "bfs.hpp"
 #include "boruvka.hpp"
+#include "kruskal.hpp"
 #include "maze_generator.hpp"
 #include "maze_solver.hpp"
 #include "maze_state.hpp"
@@ -21,8 +22,9 @@ private:
     MazeState &_state;
 
     prim::SequentialPrim _seqPrim;
+    kruskal::ParallelSortedKruskal _parKruskal;
     boruvka::SequentialBoruvka _seqBoruvka;
-    MazeGenerator *_generator = &_seqPrim;
+    MazeGenerator *_generator = &_parKruskal;
 
     bfs::ParallelBFS _parBfs;
     MazeSolver *_solver = nullptr;
@@ -35,6 +37,7 @@ public:
         : _q(q),
           _state(state),
           _seqPrim(ctx),
+          _parKruskal(ctx),
           _seqBoruvka(ctx),
           _parBfs(ctx) {}
 
@@ -43,6 +46,7 @@ public:
     MazeState &state() { return _state; }
 
     MazeGenerator *sequentialPrim() { return &_seqPrim; }
+    MazeGenerator *parallelSortedKruskal() { return &_parKruskal; }
     MazeGenerator *sequentialBoruvka() { return &_seqBoruvka; }
     MazeGenerator *generator() { return _generator; }
 
