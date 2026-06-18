@@ -47,6 +47,18 @@ uint4 getNeighbors(uint w, uint h, uint id) {
     return (uint4)(top, right, bottom, left);
 }
 
+void deleteWall(maze_data_buffer_t mazeData, vertex_t a, vertex_t b) {
+    vertex_t u = min(a, b), v = max(a, b);
+
+    if (u == v - 1) { // Horizontal
+        mazeData[u] &= ~WALL_RIGHT;
+        mazeData[v] &= ~WALL_LEFT;
+    } else { // Vertical
+        mazeData[u] &= ~WALL_BOTTOM;
+        mazeData[v] &= ~WALL_TOP;
+    }
+}
+
 kernel void render(maze_data_buffer_t mazeData, write_only image2d_t tex) {
     int x = get_global_id(0);
     int y = get_global_id(1);

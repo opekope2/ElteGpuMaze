@@ -41,15 +41,7 @@ kernel void seqPrim(uint width,
         if (j == VERTEX_INVALID)
             continue;
 
-        vertex_t u = min(i, j), v = max(i, j);
-
-        if (u == v - 1) { // Horizontal
-            mazeData[u] &= ~WALL_RIGHT;
-            mazeData[v] &= ~WALL_LEFT;
-        } else { // Vertical
-            mazeData[u] &= ~WALL_BOTTOM;
-            mazeData[v] &= ~WALL_TOP;
-        }
+        deleteWall(mazeData, i, j);
     }
 
     mazeData[0] |= SEARCH_FRONTIER;

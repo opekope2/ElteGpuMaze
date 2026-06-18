@@ -27,15 +27,7 @@ kernel void boruvka(dsu_size_t n,
             if (~i) {
                 if (dsu_union(&dsu, e[i].u, e[i].v)) {
                     comp--;
-                    if (e[i].u > e[i].v)
-                        e[i].u ^= e[i].v ^= e[i].u ^= e[i].v;
-                    if (e[i].u == e[i].v - 1) { // Horizontal
-                        maze_data[e[i].u] &= ~WALL_RIGHT;
-                        maze_data[e[i].v] &= ~WALL_LEFT;
-                    } else { // Vertical
-                        maze_data[e[i].u] &= ~WALL_BOTTOM;
-                        maze_data[e[i].v] &= ~WALL_TOP;
-                    }
+                    deleteWall(maze_data, e[i].u, e[i].v);
                 }
             }
         }

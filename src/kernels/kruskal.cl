@@ -42,16 +42,7 @@ kernel void kruskal(dsu_size_t n,
             continue;
 
         dsu_union(&dsu, u, v);
-        if (edge.u > edge.v)
-            edge.u ^= edge.v ^= edge.u ^= edge.v;
-
-        if (edge.u == edge.v - 1) { // Horizontal
-            mazeData[edge.u] &= ~WALL_RIGHT;
-            mazeData[edge.v] &= ~WALL_LEFT;
-        } else { // Vertical
-            mazeData[edge.u] &= ~WALL_BOTTOM;
-            mazeData[edge.v] &= ~WALL_TOP;
-        }
+        deleteWall(mazeData, edge.u, edge.v);
     }
 
     mazeData[0] |= SEARCH_FRONTIER;
