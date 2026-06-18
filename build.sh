@@ -26,6 +26,7 @@ _gen_prepare() (
 _gen_kernels() (
     KERNELS_HPP="$GEN"/kernels.hpp
     __run rm -f "$KERNELS_HPP"
+    echo "#pragma once" >> "$KERNELS_HPP"
 
     for f in "$KERNELS"/*.cl; do
         FILENAME=$(basename "$f")
@@ -40,6 +41,7 @@ _gen_kernels() (
 _gen_shaders() (
     SHADERS_HPP="$GEN"/shaders.hpp
     __run rm -f "$SHADERS_HPP"
+    echo "#pragma once" >> "$SHADERS_HPP"
 
     for f in "$SHADERS"/*.vert "$SHADERS"/*.frag; do
         FILENAME=$(basename "$f")
