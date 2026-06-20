@@ -21,7 +21,7 @@
 using namespace std;
 using namespace cl;
 
-cl_ulong generateMaze(MazeManager *manager) {
+void generateMaze(MazeManager *manager) {
     MazeGenerator *generator = manager->generator();
     MazeState &state = manager->state();
     CommandQueue &q = manager->queue();
@@ -33,18 +33,19 @@ cl_ulong generateMaze(MazeManager *manager) {
     q.enqueueReleaseGLObjects(&state.glObjs());
     q.finish();
 
-    return getProfilingTimeNs(events);
-}
-
-void generateMazeAndUpdateTitle(GLFWwindow *win, MazeManager *manager) {
-    MazeGenerator *generator = manager->generator();
-    MazeState &state = manager->state();
-
-    cl_ulong generateNs = generateMaze(manager);
+    cl_ulong generateNs = getProfilingTimeNs(events);
     cl_ulong generateMs = generateNs / 1'000'000;
     cout << format("Generated {}x{} maze using {} in {}ms/{}ns", state.width(), state.height(), generator->name(), generateMs, generateNs) << endl;
+}
+
+void updateTitle(GLFWwindow *win, MazeManager *manager) {
+    MazeGenerator *generator = manager->generator();
+    MazeSolver *solver = manager->solver();
+    MazeState &state = manager->state();
 
     string title = format("{} [{}x{}@{}]", generator->name(), state.width(), state.height(), state.seed());
+    if (manager->solving())
+        title += format(" | {}", solver->name());
     glfwSetWindowTitle(win, title.c_str());
 }
 
@@ -88,7 +89,9 @@ void handleInput(GLFWwindow *window, int key, int scancode, int action, int mods
         state.resize(dw, dh), regenerate = true;
 
     if (regenerate)
-        generateMazeAndUpdateTitle(window, manager), manager->resetSolver(true);
+        generateMaze(manager), manager->resetSolver(true);
+
+    updateTitle(window, manager);
 }
 
 void maze(GlfwWindow &win, Context &ctx, CommandQueue &q) {
@@ -97,7 +100,8 @@ void maze(GlfwWindow &win, Context &ctx, CommandQueue &q) {
     MazeState state(ctx, 32, 32, 6 * 7);
     MazeManager manager(ctx, q, state);
 
-    generateMazeAndUpdateTitle(win, &manager);
+    generateMaze(&manager);
+    updateTitle(win, &manager);
 
     glfwSetWindowUserPointer(win, &manager);
     glfwSetKeyCallback(win, handleInput);
