@@ -23,10 +23,7 @@ void generateMaze(MazeManager *manager) {
     CommandQueue &q = manager->queue();
     std::vector<Event> events;
 
-    q.enqueueAcquireGLObjects(&state.glObjs());
     generator->generate(q, state, events);
-    generator->renderMazeData(q, state, events);
-    q.enqueueReleaseGLObjects(&state.glObjs());
     q.finish();
 
     cl_ulong generateNs = getProfilingTimeNs(events);
@@ -91,7 +88,7 @@ void handleInput(GLFWwindow *window, int key, int scancode, int action, int mods
 }
 
 void mazeGui(GlfwWindow &win, Context &ctx, CommandQueue &q) {
-    MazeRenderer renderer;
+    MazeRenderer renderer(ctx);
 
     MazeState state(ctx, 32, 32, 6 * 7);
     MazeManager manager(ctx, q, state);
@@ -107,6 +104,7 @@ void mazeGui(GlfwWindow &win, Context &ctx, CommandQueue &q) {
         glfwGetFramebufferSize(win, &w, &h);
         glViewport(0, 0, w, h);
 
+        renderer.renderMazeData(q, state);
         renderer.render(w, h, state.texture());
 
         glfwSwapBuffers(win);
