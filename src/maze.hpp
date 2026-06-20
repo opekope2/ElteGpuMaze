@@ -1,6 +1,6 @@
 #pragma once
 
+#include "maze_manager.hpp"
 #include "util/glfw.hpp"
-#include <CL/opencl.hpp>
 
-void mazeGui(GlfwWindow &win, cl::Context &ctx, cl::CommandQueue &q);
+void mazeGui(GlfwWindow &win, cl::Context &ctx, MazeManager &manager);

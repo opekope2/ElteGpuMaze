@@ -87,11 +87,11 @@ void handleInput(GLFWwindow *window, int key, int scancode, int action, int mods
     updateTitle(window, manager);
 }
 
-void mazeGui(GlfwWindow &win, Context &ctx, CommandQueue &q) {
+void mazeGui(GlfwWindow &win, Context &ctx, MazeManager &manager) {
     MazeRenderer renderer(ctx);
 
-    MazeState state(ctx, 32, 32, 6 * 7);
-    MazeManager manager(ctx, q, state);
+    GlMazeState &state = dynamic_cast<GlMazeState &>(manager.state());
+    CommandQueue &q = manager.queue();
 
     generateMaze(&manager);
     updateTitle(win, &manager);
