@@ -18,24 +18,20 @@ namespace kruskal {
 
 class ParallelSortedKruskal : public MazeGenerator {
 private:
-    Program program;
     KernelFunctor<cl_uint, Buffer> generateEdges;
     KernelFunctor<dsu_size_t, dsu_size_t, Buffer> bitonicSwap;
     KernelFunctor<dsu_size_t, cl_uint, Buffer, Buffer, Buffer, Buffer> kruskal;
-    KernelFunctor<Buffer, ImageGL> render;
 
 public:
     ParallelSortedKruskal(Context &ctx)
-        : MazeGenerator(ctx),
-          program(buildProgram(ctx, cl::Program::Sources{XXD_STRING(maze_cl), XXD_STRING(dsu_cl), XXD_STRING(bitonic_sort_cl), XXD_STRING(kruskal_cl)})),
+        : MazeGenerator(ctx, buildProgram(ctx, cl::Program::Sources{XXD_STRING(maze_cl), XXD_STRING(dsu_cl), XXD_STRING(bitonic_sort_cl), XXD_STRING(kruskal_cl)})),
           generateEdges(program, "generateEdges"),
           bitonicSwap(program, "bitonicSwap"),
-          kruskal(program, "kruskal"),
-          render(program, "render") {}
+          kruskal(program, "kruskal") {}
 
     string name() override { return "Parallel-Sorted Kruskal"; }
 
-    void generateAndRender(CommandQueue &q, MazeState &state, std::vector<Event> &events) override {
+    void generate(CommandQueue &q, MazeState &state, std::vector<Event> &events) override {
         size_type n = static_cast<size_type>(state.width()) * static_cast<size_type>(state.height());
         dsu_size_t m = 2 * state.width() * state.height() - state.width() - state.height();
         dsu_size_t m2 = nextPowerOf2(m);
@@ -62,13 +58,9 @@ public:
             dsuParent,
             edges,
             state.mazeData());
-        Event renderEvent = render(
-            EnqueueArgs(q, NDRange(state.width(), state.height())),
-            state.mazeData(),
-            state.glImage());
 
         q.finish();
-        events.insert(events.end(), {generateEvent, renderEvent});
+        events.push_back(generateEvent);
     }
 };
 

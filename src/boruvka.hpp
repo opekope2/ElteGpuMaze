@@ -21,16 +21,12 @@ namespace boruvka {
 
 class SequentialBoruvka : public MazeGenerator {
 private:
-    Program program;
     KernelFunctor<dsu_size_t, cl_uint, Buffer, Buffer, Buffer, Buffer, Buffer> boruvka;
-    KernelFunctor<Buffer, ImageGL> render;
 
 public:
     SequentialBoruvka(Context &ctx)
-        : MazeGenerator(ctx),
-          program(buildProgram(ctx, cl::Program::Sources{XXD_STRING(maze_cl), XXD_STRING(dsu_cl), XXD_STRING(boruvka_cl)})),
-          boruvka(program, "boruvka"),
-          render(program, "render") {}
+        : MazeGenerator(ctx, buildProgram(ctx, cl::Program::Sources{XXD_STRING(maze_cl), XXD_STRING(dsu_cl), XXD_STRING(boruvka_cl)})),
+          boruvka(program, "boruvka") {}
 
     string name() override { return "Sequential Boruvka"; }
 
@@ -49,7 +45,7 @@ public:
             }
     }
 
-    void generateAndRender(CommandQueue &q, MazeState &state, std::vector<Event> &events) override {
+    void generate(CommandQueue &q, MazeState &state, std::vector<Event> &events) override {
         size_type n = static_cast<size_type>(state.width()) * static_cast<size_type>(state.height());
         std::vector<Edge> edges_vector;
         generateEdges(state, edges_vector);
@@ -71,13 +67,9 @@ public:
             minout,
             edges_buffer,
             state.mazeData());
-        Event renderEvent = render(
-            EnqueueArgs(q, NDRange(state.width(), state.height())),
-            state.mazeData(),
-            state.glImage());
 
         q.finish();
-        events.insert(events.end(), {generateEvent, renderEvent});
+        events.push_back(generateEvent);
     }
 };
 

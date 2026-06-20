@@ -16,20 +16,16 @@ namespace prim {
 
 class SequentialPrim : public MazeGenerator {
 private:
-    Program program;
     KernelFunctor<cl_uint, cl_uint, cl_uint, Buffer, Buffer, Buffer, Buffer, Buffer, Buffer> seqPrim;
-    KernelFunctor<Buffer, ImageGL> render;
 
 public:
     SequentialPrim(Context &ctx)
-        : MazeGenerator(ctx),
-          program(buildProgram(ctx, cl::Program::Sources{XXD_STRING(maze_cl), XXD_STRING(set_cl), XXD_STRING(binary_heap_cl), XXD_STRING(prim_cl)})),
-          seqPrim(program, "seqPrim"),
-          render(program, "render") {}
+        : MazeGenerator(ctx, buildProgram(ctx, cl::Program::Sources{XXD_STRING(maze_cl), XXD_STRING(set_cl), XXD_STRING(binary_heap_cl), XXD_STRING(prim_cl)})),
+          seqPrim(program, "seqPrim") {}
 
     string name() override { return "Sequential Prim"; }
 
-    void generateAndRender(CommandQueue &q, MazeState &state, std::vector<Event> &events) override {
+    void generate(CommandQueue &q, MazeState &state, std::vector<Event> &events) override {
         size_type n = static_cast<size_type>(state.width()) * static_cast<size_type>(state.height());
 
         // Does not fit into local memory on moderately large mazes, which resets my GPU
@@ -54,13 +50,9 @@ public:
             lookup,
             priorities,
             state.mazeData());
-        Event renderEvent = render(
-            EnqueueArgs(q, NDRange(state.width(), state.height())),
-            state.mazeData(),
-            state.glImage());
 
         q.finish();
-        events.insert(events.end(), {generateEvent, renderEvent});
+        events.push_back(generateEvent);
     }
 };
 

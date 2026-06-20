@@ -1,5 +1,3 @@
-#include "../gen/kernels.hpp"
-#include "../gen/shaders.hpp"
 #include "maze_generator.hpp"
 #include "maze_manager.hpp"
 #include "maze_renderer.hpp"
@@ -28,7 +26,8 @@ cl_ulong generateMaze(MazeManager *manager) {
     std::vector<Event> events;
 
     q.enqueueAcquireGLObjects(&state.glObjs());
-    generator->generateAndRender(q, state, events);
+    generator->generate(q, state, events);
+    generator->renderMazeData(q, state, events);
     q.enqueueReleaseGLObjects(&state.glObjs());
     q.finish();
 
@@ -47,6 +46,7 @@ void generateMazeAndUpdateTitle(GLFWwindow *win, MazeManager *manager) {
     glfwSetWindowTitle(win, title.c_str());
 }
 
+// FIXME only this method can correctly manage the internal state of MazeManager.
 void handleInput(GLFWwindow *window, int key, int scancode, int action, int mods) {
     auto *manager = static_cast<MazeManager *>(glfwGetWindowUserPointer(window));
     auto &state = manager->state();
