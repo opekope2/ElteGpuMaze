@@ -80,7 +80,7 @@ public:
 
         // TODO don't recreate each time
         _tex = createTexture<GL_TEXTURE_2D>();
-        glTextureStorage2D(_tex, 1, GL_R8UI, width, height);
+        glTextureStorage2D(_tex, 1, GL_R8UI, _width, _height);
         glTextureParameteri(_tex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTextureParameteri(_tex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
