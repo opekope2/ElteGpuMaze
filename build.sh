@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
+# Compiler
+CXX=g++
+
 # Dirs
 SRC=src
 KERNELS="$SRC"/kernels
@@ -9,9 +12,16 @@ OUT=bin
 GEN=gen
 
 # Flags
-CXXFLAGS=(-std=c++20 -lOpenCL -lepoxy -lglfw -lEGL -DCL_HPP_ENABLE_EXCEPTIONS -DCL_HPP_MINIMUM_OPENCL_VERSION=120 -DCL_HPP_TARGET_OPENCL_VERSION=300 -DCL_TARGET_OPENCL_VERSION=300 -DGLFW_INCLUDE_NONE)
+DEFINES=(-DCL_HPP_ENABLE_EXCEPTIONS -DCL_HPP_MINIMUM_OPENCL_VERSION=120 -DCL_HPP_TARGET_OPENCL_VERSION=300 -DCL_TARGET_OPENCL_VERSION=300 -DGLFW_INCLUDE_NONE)
+CXXFLAGS=(-std=c++20)
+LDFLAGS=(-lOpenCL -lepoxy -lglfw -lEGL)
 BUILD_FLAGS=(-O2)
 DEBUG_FLAGS=(-g -O0)
+
+if [ "${OS:-}" = "windows" ]; then
+    CXX=x86_64-w64-mingw32-g++
+    LDFLAGS=(-lOpenCL -lepoxy -lglfw3 -lgdi32 -lopengl32)
+fi
 
 # Commands
 __run() (
@@ -54,13 +64,13 @@ _gen_shaders() (
 )
 
 _build() (
-    __run g++ -Wall -o "$OUT"/main "$@" ${CXXFLAGS[@]} "$SRC"/*.cpp "$GEN"/*.cpp
+    __run "$CXX" -Wall -o "$OUT"/main "$@" "$SRC"/*.cpp "$GEN"/*.cpp ${CXXFLAGS[@]} ${LDFLAGS[@]} ${DEFINES[@]}
 )
 
 _gen_clangd() (
     echo "CompileFlags:"
     echo "  Add:"
-    for flag in ${CXXFLAGS[@]}; do
+    for flag in ${CXXFLAGS[@]} ${LDFLAGS[@]} ${DEFINES[@]}; do
         echo "    - $flag"
     done
 )

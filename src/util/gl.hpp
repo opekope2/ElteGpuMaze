@@ -5,11 +5,16 @@
 #include <CL/cl.h>
 #include <CL/cl_gl.h>
 #include <CL/opencl.hpp>
-#include <epoxy/egl.h>
 #include <epoxy/gl.h>
-#include <epoxy/glx.h>
 #include <format>
 #include <vector>
+
+#if defined(__linux__)
+#include <epoxy/egl.h>
+#include <epoxy/glx.h>
+#elif defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#endif
 
 using namespace std;
 using namespace cl;
@@ -109,8 +114,8 @@ inline GlProgram createShaderProgram(const GLchar *vertexShader, const GLchar *f
     throw runtime_error(format("Shader program linking error:\n{}", log));
 }
 
-// TODO windows
 inline std::vector<cl_context_properties> getContextProperties(Platform &p) {
+#if defined(__linux__)
     auto eglCtx = eglGetCurrentContext();
     auto glxCtx = glXGetCurrentContext();
 
@@ -127,4 +132,12 @@ inline std::vector<cl_context_properties> getContextProperties(Platform &p) {
     } else {
         throw runtime_error("Current context not available");
     }
+#elif defined(_WIN32) || defined(_WIN64)
+    return {CL_WGL_HDC_KHR, (cl_context_properties)wglGetCurrentDC(),
+            CL_GL_CONTEXT_KHR, (cl_context_properties)wglGetCurrentContext(),
+            CL_CONTEXT_PLATFORM, (cl_context_properties)p(),
+            0};
+#else
+#error Operating system not supported
+#endif
 }
