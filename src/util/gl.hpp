@@ -114,7 +114,11 @@ inline GlProgram createShaderProgram(const GLchar *vertexShader, const GLchar *f
     throw runtime_error(format("Shader program linking error:\n{}", log));
 }
 
-inline std::vector<cl_context_properties> getContextProperties(Platform &p) {
+inline std::vector<cl_context_properties> getContextProperties(Platform &p, bool headless) {
+    if (headless)
+        return {CL_CONTEXT_PLATFORM, (cl_context_properties)p(),
+                0};
+
 #if defined(__linux__)
     auto eglCtx = eglGetCurrentContext();
     auto glxCtx = glXGetCurrentContext();
