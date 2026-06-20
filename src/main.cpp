@@ -11,9 +11,11 @@
 #include <CL/opencl.hpp>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
+#include <cstdlib>
 #include <epoxy/gl.h>
 #include <format>
 #include <iostream>
+#include <stdexcept>
 #include <vector>
 
 using namespace std;
@@ -119,14 +121,54 @@ void maze(GlfwWindow &win, Context &ctx, CommandQueue &q) {
     }
 }
 
+void dumpPlatformsAndDevices() {
+    std::vector<Platform> platforms;
+    Platform::get(&platforms);
+
+    for (auto &&p : platforms) {
+        cout << "Platform: " << p.getInfo<CL_PLATFORM_NAME>() << endl;
+        std::vector<Device> devices;
+        p.getDevices(CL_DEVICE_TYPE_ALL, &devices);
+        for (auto &&d : devices)
+            cout << "  Device: " << d.getInfo<CL_DEVICE_NAME>() << endl;
+    }
+}
+
+Platform getPlatform(char *platformName) {
+    std::vector<Platform> platforms;
+    Platform::get(&platforms);
+
+    for (auto &&platform : platforms) {
+        if (platform.getInfo<CL_PLATFORM_NAME>() == platformName)
+            return platform;
+    }
+
+    throw runtime_error(format("No such platform: {}", platformName));
+}
+
+Device getDevice(Platform &platform, char *deviceName) {
+    std::vector<Device> devices;
+    platform.getDevices(CL_DEVICE_TYPE_ALL, &devices);
+    for (auto &&device : devices) {
+        if (device.getInfo<CL_DEVICE_NAME>() == deviceName)
+            return device;
+    }
+
+    throw runtime_error(format("No such device: {}", deviceName));
+}
+
 int main(int argc, char **argv) {
     try {
         auto win = Glfw::instance().createWindow(1440, 900, argv[0], nullptr, nullptr);
         glfwMakeContextCurrent(win);
 
-        // TODO handle multiple platforms, multiple devices
-        Platform platform = Platform::getDefault();
-        Device dev = Device::getDefault();
+        char *platformName = getenv("PLATFORM"), *deviceName = getenv("DEVICE");
+        bool useDefaults = platformName == nullptr || deviceName == nullptr;
+        if (useDefaults)
+            dumpPlatformsAndDevices();
+
+        Platform platform = useDefaults ? Platform::getDefault() : getPlatform(platformName);
+        Device dev = useDefaults ? Device::getDefault() : getDevice(platform, deviceName);
         auto props = getContextProperties(platform);
         Context ctx(dev, props.data());
         CommandQueue q(ctx, dev, CL_QUEUE_PROFILING_ENABLE);
