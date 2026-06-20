@@ -118,3 +118,26 @@ void mazeGui(GlfwWindow &win, Context &ctx, MazeManager &manager) {
         }
     }
 }
+
+void mazeBenchmarkGenerator(MazeManager &manager) {
+    for (MazeState &state = manager.state(); state.width() <= state.maxWidth() && state.height() <= state.maxHeight(); state.resize(state.width(), state.height())) {
+        generateMaze(&manager);
+    }
+}
+
+void mazeBenchmarkSolver(MazeManager &manager) {
+    auto solver = manager.solver();
+
+    for (MazeState &state = manager.state(); state.width() <= state.maxWidth() && state.height() <= state.maxHeight(); state.resize(state.width(), state.height())) {
+        generateMaze(&manager);
+        manager.startSolving(solver);
+
+        while (!manager.stepSolve())
+            ;
+
+        cl_ulong solveNs = manager.solveNs();
+        cl_ulong solveMs = solveNs / 1'000'000;
+        cout << format("Solved {}x{} maze using {} in {}ms/{}ns", state.width(), state.height(), manager.solver()->name(), solveMs, solveNs) << endl;
+        manager.resetSolver(true);
+    }
+}

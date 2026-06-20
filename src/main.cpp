@@ -11,6 +11,7 @@
 #include <epoxy/gl.h>
 #include <format>
 #include <iostream>
+#include <optional>
 #include <stdexcept>
 #include <vector>
 
@@ -55,26 +56,64 @@ Device getDevice(Platform &platform, char *deviceName) {
 
 int main(int argc, char **argv) {
     try {
-        auto win = Glfw::instance().createWindow(1440, 900, argv[0], nullptr, nullptr);
-        glfwMakeContextCurrent(win);
-
-        char *platformName = getenv("PLATFORM"), *deviceName = getenv("DEVICE");
+        char *platformName = getenv("PLATFORM"), *deviceName = getenv("DEVICE"), *benchmark = getenv("BENCHMARK");
         bool useDefaults = platformName == nullptr || deviceName == nullptr;
-        if (useDefaults)
+        bool gui = benchmark == nullptr;
+        if (useDefaults && gui)
             dumpPlatformsAndDevices();
+
+        optional<GlfwWindow> win;
+        if (gui) {
+            win = Glfw::instance().createWindow(1440, 900, argv[0], nullptr, nullptr);
+            glfwMakeContextCurrent(*win);
+        }
 
         Platform platform = useDefaults ? Platform::getDefault() : getPlatform(platformName);
         Device dev = useDefaults ? Device::getDefault() : getDevice(platform, deviceName);
-        auto props = getContextProperties(platform);
+        auto props = getContextProperties(platform, !gui);
         Context ctx(dev, props.data());
         CommandQueue q(ctx, dev, CL_QUEUE_PROFILING_ENABLE);
 
-        GlMazeState state(ctx);
-        state.seed(6 * 7), state.size(32, 32);
+        if (gui) {
+            GlMazeState state(ctx);
+            state.seed(6 * 7), state.size(32, 32);
+            MazeManager manager(ctx, q, state);
+
+            mazeGui(*win, ctx, manager);
+            return 0;
+        }
+
+        MazeState state(ctx);
+        state.seed(6 * 7), state.size(state.minWidth(), state.minHeight());
         MazeManager manager(ctx, q, state);
 
-        mazeGui(win, ctx, manager);
-        return 0;
+        if (benchmark == string("list")) {
+            for (auto generator : manager.generators())
+                cout << generator->name() << endl;
+            for (auto solver : manager.solvers())
+                cout << solver->name() << endl;
+            return 0;
+        }
+
+        for (auto generator : manager.generators()) {
+            if (generator->name() != benchmark)
+                continue;
+
+            manager.generator(generator);
+            mazeBenchmarkGenerator(manager);
+            return 0;
+        }
+
+        for (auto solver : manager.solvers()) {
+            if (solver->name() != benchmark)
+                continue;
+
+            manager.startSolving(solver);
+            mazeBenchmarkSolver(manager);
+            return 0;
+        }
+
+        throw runtime_error(format("No such generator or solver to benchmark: {}", benchmark));
     } catch (const BuildError &e) {
         cerr << format("OpenCL error: {} ({})", e.what(), e.err()) << endl;
 

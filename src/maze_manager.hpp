@@ -25,9 +25,11 @@ private:
     kruskal::ParallelSortedKruskal _parKruskal;
     boruvka::SequentialBoruvka _seqBoruvka;
     MazeGenerator *_generator = &_parKruskal;
+    std::vector<MazeGenerator *> _generators{&_seqPrim, &_parKruskal, &_seqBoruvka};
 
     bfs::ParallelBFS _parBfs;
     MazeSolver *_solver = nullptr;
+    std::vector<MazeSolver *> _solvers{&_parBfs};
 
     bool _solved = false;
     cl_ulong _solveNs = 0;
@@ -49,11 +51,13 @@ public:
     MazeGenerator *parallelSortedKruskal() { return &_parKruskal; }
     MazeGenerator *sequentialBoruvka() { return &_seqBoruvka; }
     MazeGenerator *generator() { return _generator; }
+    std::vector<MazeGenerator *> &generators() { return _generators; }
 
     void generator(MazeGenerator *gen) { _generator = gen; }
 
     MazeSolver *parallelBfs() { return &_parBfs; }
     MazeSolver *solver() { return _solver; }
+    std::vector<MazeSolver *> &solvers() { return _solvers; }
 
     void startSolving(MazeSolver *solver) { _solver = solver; }
 
