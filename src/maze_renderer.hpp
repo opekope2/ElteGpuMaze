@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../gen/shaders.hpp"
 #include "util/gl.hpp"
 #include <epoxy/gl.h>

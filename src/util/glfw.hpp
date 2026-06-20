@@ -1,3 +1,5 @@
+#pragma once
+
 #include "gl.hpp"
 #include "misc.hpp"
 #include <GLFW/glfw3.h>
