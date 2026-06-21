@@ -87,19 +87,12 @@ int main(int argc, char **argv) {
         state.seed(6 * 7), state.size(state.minWidth(), state.minHeight());
         MazeManager manager(ctx, q, state);
 
-        if (benchmark == string("list")) {
-            for (auto generator : manager.generators())
-                cout << generator->name() << endl;
-            for (auto solver : manager.solvers())
-                cout << solver->name() << endl;
-            return 0;
-        }
-
         for (auto generator : manager.generators()) {
             if (generator->name() != benchmark)
                 continue;
 
             manager.generator(generator);
+            dumpStatsHeader(platform, dev, benchmark);
             mazeBenchmarkGenerator(manager);
             return 0;
         }
@@ -109,11 +102,16 @@ int main(int argc, char **argv) {
                 continue;
 
             manager.startSolving(solver);
+            dumpStatsHeader(platform, dev, benchmark);
             mazeBenchmarkSolver(manager);
             return 0;
         }
 
-        throw runtime_error(format("No such generator or solver to benchmark: {}", benchmark));
+        for (auto generator : manager.generators())
+            cout << generator->name() << endl;
+        for (auto solver : manager.solvers())
+            cout << solver->name() << endl;
+        return 0;
     } catch (const BuildError &e) {
         cerr << format("OpenCL error: {} ({})", e.what(), e.err()) << endl;
 
