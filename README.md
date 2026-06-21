@@ -9,7 +9,7 @@ gcc           # C++ compiler
 opencl-clhpp  # OpenCL C++ headers
 libglvnd      # OpenGL headers
 libepoxy      # OpenGL extension loader
-xxd           # Kernel to header embedding
+tinyxxd       # Kernel to header embedding
 glfw          # Windowing
 ```
 

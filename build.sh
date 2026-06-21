@@ -42,7 +42,7 @@ _gen_kernels() (
         FILENAME=$(basename "$f")
         FILENAME=${FILENAME//./_}
 
-        __run xxd -i -t -n "$FILENAME" "$f" "$GEN"/"$FILENAME".cpp
+        __run tinyxxd -i -t -n "$FILENAME" "$f" "$GEN"/"$FILENAME".cpp
         echo "extern unsigned char $FILENAME[];" >> "$KERNELS_HPP"
         echo "extern unsigned int ${FILENAME}_len;" >> "$KERNELS_HPP"
     done
@@ -57,7 +57,7 @@ _gen_shaders() (
         FILENAME=$(basename "$f")
         FILENAME=${FILENAME//./_}
 
-        __run xxd -i -t -n "$FILENAME" "$f" "$GEN"/"$FILENAME".cpp
+        __run tinyxxd -i -t -n "$FILENAME" "$f" "$GEN"/"$FILENAME".cpp
         echo "extern unsigned char $FILENAME[];" >> "$SHADERS_HPP"
         echo "extern unsigned int ${FILENAME}_len;" >> "$SHADERS_HPP"
     done
