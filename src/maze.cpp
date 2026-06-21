@@ -100,7 +100,9 @@ void mazeGui(GlfwWindow &win, Context &ctx, MazeManager &manager) {
     GlMazeState &state = dynamic_cast<GlMazeState &>(manager.state());
     CommandQueue &q = manager.queue();
 
-    generateMaze(&manager);
+    cl_ulong generateNs = generateMaze(&manager);
+    cl_ulong generateMs = generateNs / 1'000'000;
+    cout << format("Generated {}x{} maze using {} in {}ms/{}ns", state.width(), state.height(), manager.generator()->name(), generateMs, generateNs) << endl;
     updateTitle(win, &manager);
 
     glfwSetWindowUserPointer(win, &manager);
