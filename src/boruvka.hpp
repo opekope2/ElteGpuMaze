@@ -16,52 +16,39 @@ using namespace cl;
 
 namespace boruvka {
 
-#define EMPLACE_EDGE(vector, u, v, stride, seed) \
-    vector.emplace_back(u, v, weight(seed, stride, u, v))
-
 class SequentialBoruvka : public MazeGenerator {
 private:
+    KernelFunctor<cl_uint, Buffer> generateEdges;
     KernelFunctor<dsu_size_t, cl_uint, Buffer, Buffer, Buffer, Buffer, Buffer> boruvka;
 
 public:
     SequentialBoruvka(Context &ctx)
-        : MazeGenerator(ctx, buildProgram(ctx, cl::Program::Sources{XXD_STRING(maze_cl), XXD_STRING(dsu_cl), XXD_STRING(boruvka_cl)})),
+        : MazeGenerator(ctx, buildProgram(ctx, cl::Program::Sources{XXD_STRING(maze_cl), XXD_STRING(dsu_cl), XXD_STRING(generator_cl), XXD_STRING(boruvka_cl)})),
+          generateEdges(program, "generateEdges"),
           boruvka(program, "boruvka") {}
 
     string name() override { return "Sequential Boruvka"; }
 
-    void generateEdges(MazeState &state, std::vector<Edge> &edges) {
-        cl_uint w = state.width(), h = state.height(), s = state.seed();
-        edges.reserve(2 * w * h - w - h);
-        for (cl_uint j = 1; j < w; j++)
-            EMPLACE_EDGE(edges, j - 1, j, w, s);
-        for (cl_uint i = 1; i < h; i++)
-            EMPLACE_EDGE(edges, (i - 1) * w, i * w, w, s);
-        for (cl_uint i = 1; i < h; i++)
-            for (cl_uint j = 1; j < w; j++) {
-                cl_uint ij = i * w + j;
-                EMPLACE_EDGE(edges, ij - 1, ij, w, s);
-                EMPLACE_EDGE(edges, ij - w, ij, w, s);
-            }
-    }
-
     void generate(CommandQueue &q, MazeState &state, std::vector<Event> &events) override {
         size_type n = static_cast<size_type>(state.width()) * static_cast<size_type>(state.height());
-        std::vector<Edge> edges_vector;
-        generateEdges(state, edges_vector);
+        dsu_size_t m = 2 * state.width() * state.height() - state.width() - state.height();
 
         // Does not fit into local memory on moderately large mazes, which resets my GPU
         Buffer dsu_size(ctx, CL_MEM_READ_WRITE, sizeof(dsu_size_t) * n);
         Buffer dsu_parent(ctx, CL_MEM_READ_WRITE, sizeof(dsu_vertex_t) * n);
         Buffer minout(ctx, CL_MEM_READ_WRITE, sizeof(cl_uint) * n);
-        Buffer edges_buffer(ctx, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(Edge) * edges_vector.size(), edges_vector.data());
+        Buffer edges_buffer(ctx, CL_MEM_READ_WRITE, sizeof(Edge) * m);
 
         q.enqueueFillBuffer<maze_data_t>(state.mazeData(), WALL_TOP | WALL_RIGHT | WALL_BOTTOM | WALL_LEFT, 0, sizeof(maze_data_t) * n);
 
+        Event generateEdgesEvent = generateEdges(
+            EnqueueArgs(q, NDRange(state.width(), state.height())),
+            state.seed(),
+            edges_buffer);
         Event generateEvent = boruvka(
             EnqueueArgs(q, NDRange(1)),
             n,
-            edges_vector.size(),
+            m,
             dsu_size,
             dsu_parent,
             minout,
@@ -69,6 +56,7 @@ public:
             state.mazeData());
 
         q.finish();
+        events.push_back(generateEdgesEvent);
         events.push_back(generateEvent);
     }
 };

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "bfs.hpp"
+#include "../gen/kernels.hpp"
 #include "maze_generator.hpp"
 #include "util/bitonic_sort.hpp"
 #include "util/cl.hpp"
@@ -24,7 +24,7 @@ private:
 
 public:
     ParallelSortedKruskal(Context &ctx)
-        : MazeGenerator(ctx, buildProgram(ctx, cl::Program::Sources{XXD_STRING(maze_cl), XXD_STRING(dsu_cl), XXD_STRING(bitonic_sort_cl), XXD_STRING(kruskal_cl)})),
+        : MazeGenerator(ctx, buildProgram(ctx, cl::Program::Sources{XXD_STRING(maze_cl), XXD_STRING(dsu_cl), XXD_STRING(generator_cl), XXD_STRING(bitonic_sort_cl), XXD_STRING(kruskal_cl)})),
           generateEdges(program, "generateEdges"),
           bitonicSwap(program, "bitonicSwap"),
           kruskal(program, "kruskal") {}
