@@ -175,7 +175,7 @@ void mazeBenchmarkGenerator(MazeManager &manager) {
     std::vector<cl_ulong> ns;
     for (MazeState &state = manager.state(); state.width() <= state.maxWidth() && state.height() <= state.maxHeight(); state.resize(state.width(), state.height())) {
         for (int i = 0; i < BENCHMARK_SAMPLE_SIZE; i++)
-            ns.push_back(generateMaze(&manager));
+            state.seed(i), ns.push_back(generateMaze(&manager));
 
         dumpStats(ns, state.width(), state.height());
         ns.clear();
@@ -188,6 +188,7 @@ void mazeBenchmarkSolver(MazeManager &manager) {
 
     for (MazeState &state = manager.state(); state.width() <= state.maxWidth() && state.height() <= state.maxHeight(); state.resize(state.width(), state.height())) {
         for (int i = 0; i < BENCHMARK_SAMPLE_SIZE; i++) {
+            state.seed(i);
             generateMaze(&manager);
             manager.startSolving(solver);
 
