@@ -29,3 +29,48 @@ mingw-w64-glfw              # Windowing
 ## Setup
 
 When using the clangd extension in VSCode, the `./build.sh gen_clangd` command can be used to generate a `.clangd` file, which helps with IntelliSense.
+
+## Building (Linux)
+
+Run `./build.sh` to build the executable. Run `./build.sh debug` to create a debug build. Run `OS=windows ./build.sh` to create a Windows build.
+
+## Building (Windows)
+
+`¯\_(ツ)_/¯`
+
+## Running (Linux)
+
+Run `bin/main`
+
+## Running (Windows)
+
+Run `bin\main.exe`
+
+You'll need `libepoxy-0.dll`, `libgcc_s_seh-1.dll`, `libstdc++-6.dll`, and `libwinpthread-1.dll` from the cross compiler toolchain.
+
+## Usage
+
+* ⬅️: Decrease maze width by 1
+* ➡️: Increase maze width by 1
+* ⬆️: Decrease maze height by 1
+* ⬇️: Increase maze height by 1
+* `-`: Decrease maze seed by 1
+* `=`: Increase maze seed by 1
+* `P`: Generate maze using Sequential Prim algorithm
+* `K`: Generate maze using Parallel-Sorted Kruskal algorithm
+* `B`: Generate maze using Sequential Boruvka algorithm
+* `W`: Solve maze using Parallel Breadth-First Search algorithm
+* `Q`: Quit
+
+Hold `CTRL` to increase or decrease values by 10.
+Hold `SHIFT` to increase or decrease values by 100.
+Hold `CTRL` and `SHIFT` to increase or decrease values by 1000.
+
+Upon launch, the application will print the available OpenCL platforms and devices.
+When generating or solving a maze, the application will print the time it took.
+
+Specify the `PLATFORM` and `DEVICE` environment variables to choose OpenCL platform and device instead of the default one.
+
+## Benchmark
+
+Specify the `BENCHMARK` environment variable to run a specific benchmark. If the benchmark doesn't exist, a list of all benchmarks will be printed.
