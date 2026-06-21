@@ -1,4 +1,4 @@
-# ELTE GPU Prog Assignment
+# ELTE GPU Maze
 
 Path finding in a maze
 
