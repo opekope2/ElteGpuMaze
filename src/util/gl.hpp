@@ -1,5 +1,7 @@
 #pragma once
 
+#if defined(GUI)
+
 #include "handle.hpp"
 #include "misc.hpp"
 #include <CL/cl.h>
@@ -7,18 +9,6 @@
 #include <CL/opencl.hpp>
 #include <epoxy/gl.h>
 #include <format>
-#include <vector>
-
-#if defined(GUI)
-
-#if defined(__linux__)
-#include <epoxy/egl.h>
-#include <epoxy/glx.h>
-#elif defined(_WIN32) || defined(_WIN64)
-#include <windows.h>
-#endif
-
-#endif
 
 using namespace std;
 using namespace cl;
@@ -118,40 +108,4 @@ inline GlProgram createShaderProgram(const GLchar *vertexShader, const GLchar *f
     throw runtime_error(format("Shader program linking error:\n{}", log));
 }
 
-inline std::vector<cl_context_properties> getContextProperties(Platform &p, bool headless) {
-#if defined(GUI)
-    if (headless)
 #endif
-        return {CL_CONTEXT_PLATFORM, (cl_context_properties)p(),
-                0};
-
-#if defined(GUI)
-
-#if defined(__linux__)
-    auto eglCtx = eglGetCurrentContext();
-    auto glxCtx = glXGetCurrentContext();
-
-    if (eglCtx != EGL_NO_CONTEXT) {
-        return {CL_EGL_DISPLAY_KHR, (cl_context_properties)eglGetCurrentDisplay(),
-                CL_GL_CONTEXT_KHR, (cl_context_properties)eglCtx,
-                CL_CONTEXT_PLATFORM, (cl_context_properties)p(),
-                0};
-    } else if (glxCtx != nullptr) {
-        return {CL_GLX_DISPLAY_KHR, (cl_context_properties)glXGetCurrentDisplay(),
-                CL_GL_CONTEXT_KHR, (cl_context_properties)glxCtx,
-                CL_CONTEXT_PLATFORM, (cl_context_properties)p(),
-                0};
-    } else {
-        throw runtime_error("Current context not available");
-    }
-#elif defined(_WIN32) || defined(_WIN64)
-    return {CL_WGL_HDC_KHR, (cl_context_properties)wglGetCurrentDC(),
-            CL_GL_CONTEXT_KHR, (cl_context_properties)wglGetCurrentContext(),
-            CL_CONTEXT_PLATFORM, (cl_context_properties)p(),
-            0};
-#else
-#error Operating system not supported
-#endif
-
-#endif
-}

@@ -1,7 +1,7 @@
 #include "maze.hpp"
 #include "maze_manager.hpp"
 #include "maze_state.hpp"
-#include "util/gl.hpp"
+#include "util/cl.hpp"
 #include "util/glfw.hpp"
 #include <CL/cl.h>
 #include <CL/cl_platform.h>
