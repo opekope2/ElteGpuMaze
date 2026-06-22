@@ -6,7 +6,6 @@
 #include <CL/cl_platform.h>
 #include <CL/opencl.hpp>
 #include <cassert>
-#include <epoxy/gl_generated.h>
 #include <vector>
 
 using namespace cl;
@@ -54,6 +53,9 @@ public:
     void seed(cl_uint seed) { _seed = seed; }
 };
 
+#if defined(GUI)
+#include <epoxy/gl.h>
+
 class GlMazeState : public MazeState {
 private:
     GLint _maxSize;
@@ -88,3 +90,4 @@ public:
         _glObjs[0] = _glImg;
     }
 };
+#endif

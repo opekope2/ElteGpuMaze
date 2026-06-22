@@ -7,7 +7,6 @@
 #include <CL/cl_platform.h>
 #include <CL/opencl.hpp>
 #include <cstdlib>
-#include <epoxy/gl.h>
 #include <format>
 #include <iostream>
 #include <optional>
@@ -16,6 +15,7 @@
 
 #if defined(GUI)
 #include <GLFW/glfw3.h>
+#include <epoxy/gl.h>
 #endif
 
 using namespace std;

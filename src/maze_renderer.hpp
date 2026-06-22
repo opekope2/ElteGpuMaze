@@ -1,5 +1,7 @@
 #pragma once
 
+#if defined(GUI)
+
 #include "../gen/kernels.hpp"
 #include "../gen/shaders.hpp"
 #include "maze_state.hpp"
@@ -66,3 +68,5 @@ public:
         glDrawArrays(GL_TRIANGLE_FAN, 0, VERTEX_COUNT);
     }
 };
+
+#endif

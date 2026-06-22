@@ -11,7 +11,6 @@
 #include <CL/opencl.hpp>
 #include <algorithm>
 #include <cmath>
-#include <epoxy/gl.h>
 #include <format>
 #include <iostream>
 #include <numeric>
@@ -19,6 +18,7 @@
 
 #if defined(GUI)
 #include <GLFW/glfw3.h>
+#include <epoxy/gl.h>
 #endif
 
 using namespace std;
