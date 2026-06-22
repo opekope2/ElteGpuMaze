@@ -5,9 +5,11 @@
 
 #define BENCHMARK_SAMPLE_SIZE 256
 
+#if defined(GUI)
 void mazeGui(GlfwWindow &win, cl::Context &ctx, MazeManager &manager);
+#endif
 
-void dumpStatsHeader(Platform &platform, Device &device, char *benchmark);
+void dumpStatsHeader(Platform &platform, Device &device, string benchmark);
 
 void mazeBenchmarkGenerator(MazeManager &manager);
 

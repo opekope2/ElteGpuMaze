@@ -1,5 +1,7 @@
 #pragma once
 
+#if defined(GUI)
+
 #include "gl.hpp"
 #include "misc.hpp"
 #include <GLFW/glfw3.h>
@@ -30,3 +32,5 @@ public:
         return instance;
     }
 };
+
+#endif

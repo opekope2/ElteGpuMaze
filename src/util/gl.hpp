@@ -9,11 +9,15 @@
 #include <format>
 #include <vector>
 
+#if defined(GUI)
+
 #if defined(__linux__)
 #include <epoxy/egl.h>
 #include <epoxy/glx.h>
 #elif defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
+#endif
+
 #endif
 
 using namespace std;
@@ -115,9 +119,13 @@ inline GlProgram createShaderProgram(const GLchar *vertexShader, const GLchar *f
 }
 
 inline std::vector<cl_context_properties> getContextProperties(Platform &p, bool headless) {
+#if defined(GUI)
     if (headless)
+#endif
         return {CL_CONTEXT_PLATFORM, (cl_context_properties)p(),
                 0};
+
+#if defined(GUI)
 
 #if defined(__linux__)
     auto eglCtx = eglGetCurrentContext();
@@ -143,5 +151,7 @@ inline std::vector<cl_context_properties> getContextProperties(Platform &p, bool
             0};
 #else
 #error Operating system not supported
+#endif
+
 #endif
 }

@@ -66,10 +66,10 @@ Hold `CTRL` to increase or decrease values by 10.
 Hold `SHIFT` to increase or decrease values by 100.
 Hold `CTRL` and `SHIFT` to increase or decrease values by 1000.
 
-Upon launch, the application will print the available OpenCL platforms and devices.
 When generating or solving a maze, the application will print the time it took.
 
 Specify the `PLATFORM` and `DEVICE` environment variables to choose OpenCL platform and device instead of the default one.
+Specify the `PLATFORM=list` and `DEVICE=list` environment variables to print the available OpenCL platforms and devices.
 
 ## Benchmark
 

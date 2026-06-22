@@ -6,7 +6,6 @@
 #include <CL/cl.h>
 #include <CL/cl_platform.h>
 #include <CL/opencl.hpp>
-#include <GLFW/glfw3.h>
 #include <cstdlib>
 #include <epoxy/gl.h>
 #include <format>
@@ -14,6 +13,10 @@
 #include <optional>
 #include <stdexcept>
 #include <vector>
+
+#if defined(GUI)
+#include <GLFW/glfw3.h>
+#endif
 
 using namespace std;
 using namespace cl;
@@ -31,7 +34,7 @@ void dumpPlatformsAndDevices() {
     }
 }
 
-Platform getPlatform(char *platformName) {
+Platform getPlatform(string platformName) {
     std::vector<Platform> platforms;
     Platform::get(&platforms);
 
@@ -43,7 +46,7 @@ Platform getPlatform(char *platformName) {
     throw runtime_error(format("No such platform: {}", platformName));
 }
 
-Device getDevice(Platform &platform, char *deviceName) {
+Device getDevice(Platform &platform, string deviceName) {
     std::vector<Device> devices;
     platform.getDevices(CL_DEVICE_TYPE_ALL, &devices);
     for (auto &&device : devices) {
@@ -54,19 +57,30 @@ Device getDevice(Platform &platform, char *deviceName) {
     throw runtime_error(format("No such device: {}", deviceName));
 }
 
+string getEnvOrEmpty(const char *name) {
+    auto env = getenv(name);
+    return env == nullptr ? "" : string(env);
+}
+
 int main(int argc, char **argv) {
     try {
-        char *platformName = getenv("PLATFORM"), *deviceName = getenv("DEVICE"), *benchmark = getenv("BENCHMARK");
-        bool useDefaults = platformName == nullptr || deviceName == nullptr;
-        bool gui = benchmark == nullptr;
-        if (useDefaults && gui)
-            dumpPlatformsAndDevices();
+        string platformName = getEnvOrEmpty("PLATFORM"), deviceName = getEnvOrEmpty("DEVICE"), benchmark = getEnvOrEmpty("BENCHMARK");
+        bool useDefaults = platformName == "" || deviceName == "";
+#if defined(GUI)
+        bool gui = benchmark == "";
+#else
+        bool gui = false;
+#endif
+        if (platformName == "list" && deviceName == "list")
+            return dumpPlatformsAndDevices(), 0;
 
+#if defined(GUI)
         optional<GlfwWindow> win;
         if (gui) {
             win = Glfw::instance().createWindow(1440, 900, argv[0], nullptr, nullptr);
             glfwMakeContextCurrent(*win);
         }
+#endif
 
         Platform platform = useDefaults ? Platform::getDefault() : getPlatform(platformName);
         Device dev = useDefaults ? Device::getDefault() : getDevice(platform, deviceName);
@@ -74,6 +88,7 @@ int main(int argc, char **argv) {
         Context ctx(dev, props.data());
         CommandQueue q(ctx, dev, CL_QUEUE_PROFILING_ENABLE);
 
+#if defined(GUI)
         if (gui) {
             GlMazeState state(ctx);
             state.seed(6 * 7), state.size(32, 32);
@@ -82,6 +97,7 @@ int main(int argc, char **argv) {
             mazeGui(*win, ctx, manager);
             return 0;
         }
+#endif
 
         MazeState state(ctx);
         state.seed(6 * 7), state.size(state.minWidth(), state.minHeight());

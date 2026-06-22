@@ -1,8 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
+# Parameters
+OS=${OS:-linux}
+GUI=${GUI:-1}
+
 # Compiler
-CXX=g++
+[ ! "$OS" = "windows" ] && CXX=g++ || CXX=x86_64-w64-mingw32-g++
 
 # Dirs
 SRC=src
@@ -14,13 +18,13 @@ GEN=gen
 # Flags
 DEFINES=(-DCL_HPP_ENABLE_EXCEPTIONS -DCL_HPP_MINIMUM_OPENCL_VERSION=120 -DCL_HPP_TARGET_OPENCL_VERSION=300 -DCL_TARGET_OPENCL_VERSION=300 -DGLFW_INCLUDE_NONE)
 CXXFLAGS=(-std=c++20)
-LDFLAGS=(-lOpenCL -lepoxy -lglfw -lEGL)
+[ ! "$OS" = "windows" ] && LDFLAGS=(-lOpenCL -lepoxy) || LDFLAGS=(-lOpenCL)
 BUILD_FLAGS=(-O2)
 DEBUG_FLAGS=(-g -O0)
 
-if [ "${OS:-}" = "windows" ]; then
-    CXX=x86_64-w64-mingw32-g++
-    LDFLAGS=(-lOpenCL -lepoxy -lglfw3 -lgdi32 -lopengl32)
+if [ ! "$GUI" = 0 ]; then
+    DEFINES+=(-DGUI)
+    [ ! "$OS" = "windows" ] && LDFLAGS+=(-lglfw -lepoxy -lEGL) || LDFLAGS+=(-lglfw3 -lgdi32 -lopengl32)
 fi
 
 # Commands

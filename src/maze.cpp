@@ -9,7 +9,6 @@
 #include <CL/cl.h>
 #include <CL/cl_platform.h>
 #include <CL/opencl.hpp>
-#include <GLFW/glfw3.h>
 #include <algorithm>
 #include <cmath>
 #include <epoxy/gl.h>
@@ -17,6 +16,10 @@
 #include <iostream>
 #include <numeric>
 #include <vector>
+
+#if defined(GUI)
+#include <GLFW/glfw3.h>
+#endif
 
 using namespace std;
 using namespace cl;
@@ -33,6 +36,7 @@ cl_ulong generateMaze(MazeManager *manager) {
     return getProfilingTimeNs(events);
 }
 
+#if defined(GUI)
 void updateTitle(GLFWwindow *win, MazeManager *manager) {
     MazeGenerator *generator = manager->generator();
     MazeSolver *solver = manager->solver();
@@ -127,8 +131,9 @@ void mazeGui(GlfwWindow &win, Context &ctx, MazeManager &manager) {
         }
     }
 }
+#endif
 
-void dumpStatsHeader(Platform &platform, Device &device, char *benchmark) {
+void dumpStatsHeader(Platform &platform, Device &device, string benchmark) {
 #if defined(__linux__)
     cout << "Target OS: Linux" << endl;
 #elif defined(_WIN32) || defined(_WIN64)
