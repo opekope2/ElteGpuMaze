@@ -33,6 +33,7 @@ private:
 
     bool _solved = false;
     cl_ulong _solveNs = 0;
+    uint8_t _solveSpeed = 1;
 
 public:
     MazeManager(Context &ctx, CommandQueue &q, MazeState &state)
@@ -65,18 +66,22 @@ public:
     bool solving() { return _solver != nullptr; }
     cl_ulong solveNs() { return _solveNs; }
 
+    uint8_t solvingSpeed() { return _solveSpeed; }
+    void solvingSpeed(uint8_t speed) { _solveSpeed = speed; }
+
     bool stepSolve() {
         if (_solved || !solving())
             return false;
 
         std::vector<Event> events;
-        bool done = _solver->stepSolve(_q, _state, events);
+        for (uint8_t i = _solveSpeed; i > 0; i--)
+            if (_solver->stepSolve(_q, _state, events)) {
+                _solved = true;
+                break;
+            }
+
         _solveNs += getProfilingTimeNs(events);
-
-        if (done)
-            _solved = true;
-
-        return done;
+        return _solved;
     }
 
     void resetSolver(bool resetSolved) { _solved &= !resetSolved, _solver = nullptr, _solveNs = 0; }

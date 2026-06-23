@@ -11,6 +11,7 @@
 #include <CL/opencl.hpp>
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <format>
 #include <iostream>
 #include <numeric>
@@ -44,7 +45,7 @@ void updateTitle(GLFWwindow *win, MazeManager *manager) {
 
     string title = format("{} [{}x{}@{}]", generator->name(), state.width(), state.height(), state.seed());
     if (manager->solving())
-        title += format(" | {}", solver->name());
+        title += format(" | {} [x{}]", solver->name(), manager->solvingSpeed());
     glfwSetWindowTitle(win, title.c_str());
 }
 
@@ -55,6 +56,7 @@ void handleInput(GLFWwindow *window, int key, int scancode, int action, int mods
 
     cl_uint dw = 0, dh = 0, seed = 0;
     bool regenerate = false;
+    uint8_t speed = manager->solvingSpeed();
 
     if (key == GLFW_KEY_LEFT && action != GLFW_RELEASE)
         dw -= AMOUNT(mods);
@@ -79,6 +81,13 @@ void handleInput(GLFWwindow *window, int key, int scancode, int action, int mods
     if (key == GLFW_KEY_W && action != GLFW_RELEASE && !manager->solving() && !manager->solved())
         manager->startSolving(manager->parallelBfs());
 
+    if (key == GLFW_KEY_SPACE && action != GLFW_RELEASE)
+        speed = !speed;
+    if (key == GLFW_KEY_LEFT_BRACKET && action != GLFW_RELEASE)
+        speed -= AMOUNT(mods);
+    if (key == GLFW_KEY_RIGHT_BRACKET && action != GLFW_RELEASE)
+        speed += AMOUNT(mods);
+
     if (key == GLFW_KEY_Q && action != GLFW_RELEASE)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
 
@@ -86,6 +95,8 @@ void handleInput(GLFWwindow *window, int key, int scancode, int action, int mods
         state.seed(seed + state.seed()), regenerate = true;
     if (dw || dh)
         state.resize(dw, dh), regenerate = true;
+    if (speed != manager->solvingSpeed())
+        manager->solvingSpeed(speed);
 
     if (regenerate) {
         cl_ulong generateNs = generateMaze(manager);
