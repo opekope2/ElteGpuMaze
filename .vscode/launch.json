@@ -4,7 +4,7 @@
             "type": "gdb",
             "request": "launch",
             "name": "Debug",
-            "target": "${workspaceRoot}/bin/main",
+            "target": "${workspaceRoot}/bin/maze",
             "cwd": "${workspaceRoot}",
             "valuesFormatting": "parseText",
             "preLaunchTask": "Build"
