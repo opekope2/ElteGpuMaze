@@ -68,7 +68,7 @@ _gen_shaders() (
 )
 
 _build() (
-    __run "$CXX" -Wall -o "$OUT"/main "$@" "$SRC"/*.cpp "$GEN"/*.cpp ${CXXFLAGS[@]} ${LDFLAGS[@]} ${DEFINES[@]}
+    __run "$CXX" -Wall -o "$OUT"/maze "$@" "$SRC"/*.cpp "$GEN"/*.cpp ${CXXFLAGS[@]} ${LDFLAGS[@]} ${DEFINES[@]}
 )
 
 _gen_clangd() (
