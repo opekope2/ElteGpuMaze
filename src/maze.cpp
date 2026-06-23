@@ -36,6 +36,15 @@ cl_ulong generateMaze(MazeManager *manager) {
 }
 
 #if defined(GUI)
+void step(MazeManager *manager) {
+    if (manager->stepSolve()) {
+        cl_ulong solveNs = manager->solveNs();
+        cl_ulong solveMs = solveNs / 1'000'000;
+        cout << format("Solved {}x{} maze using {} in {}ms/{}ns", manager->state().width(), manager->state().height(), manager->solver()->name(), solveMs, solveNs) << endl;
+        manager->resetSolver(false);
+    }
+}
+
 void updateTitle(GLFWwindow *win, MazeManager *manager) {
     MazeGenerator *generator = manager->generator();
     MazeSolver *solver = manager->solver();
@@ -43,7 +52,7 @@ void updateTitle(GLFWwindow *win, MazeManager *manager) {
 
     string title = format("{} [{}x{}@{}]", generator->name(), state.width(), state.height(), state.seed());
     if (manager->solving())
-        title += format(" | {} [x{}]", solver->name(), manager->solvingSpeed());
+        title += format(" | {} (x{})", solver->name(), manager->solvingSpeed());
     glfwSetWindowTitle(win, title.c_str());
 }
 
@@ -85,6 +94,8 @@ void handleInput(GLFWwindow *window, int key, int scancode, int action, int mods
         speed -= AMOUNT(mods);
     if (key == GLFW_KEY_RIGHT_BRACKET && action != GLFW_RELEASE)
         speed += AMOUNT(mods);
+    if (key == GLFW_KEY_PERIOD && action != GLFW_RELEASE && !speed)
+        manager->solvingSpeed(1), step(manager), manager->solvingSpeed(0);
 
     if (key == GLFW_KEY_Q && action != GLFW_RELEASE)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
@@ -132,12 +143,7 @@ void mazeGui(GlfwWindow &win, Context &ctx, MazeManager &manager) {
         glfwSwapBuffers(win);
         glfwPollEvents();
 
-        if (manager.stepSolve()) {
-            cl_ulong solveNs = manager.solveNs();
-            cl_ulong solveMs = solveNs / 1'000'000;
-            cout << format("Solved {}x{} maze using {} in {}ms/{}ns", state.width(), state.height(), manager.solver()->name(), solveMs, solveNs) << endl;
-            manager.resetSolver(false);
-        }
+        step(&manager);
     }
 }
 #endif
