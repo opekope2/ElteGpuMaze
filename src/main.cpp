@@ -1,3 +1,4 @@
+#include "benchmark.hpp"
 #include "maze.hpp"
 #include "maze_manager.hpp"
 #include "maze_state.hpp"
@@ -11,6 +12,7 @@
 #include <iostream>
 #include <optional>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 #if defined(GUI)
@@ -57,17 +59,17 @@ Device getDevice(Platform &platform, string deviceName) {
     throw runtime_error(format("No such device: {}", deviceName));
 }
 
-string getEnvOrEmpty(const char *name) {
-    auto env = getenv(name);
-    return env == nullptr ? "" : string(env);
+string getEnvOr(const char *name, const char *def) {
+    char *env = getenv(name);
+    return string(env == nullptr ? def : env);
 }
 
 int main(int argc, char **argv) {
     try {
-        string platformName = getEnvOrEmpty("PLATFORM"), deviceName = getEnvOrEmpty("DEVICE"), benchmark = getEnvOrEmpty("BENCHMARK");
+        string platformName = getEnvOr("PLATFORM", ""), deviceName = getEnvOr("DEVICE", ""), benchmarkName = getEnvOr("BENCHMARK", "");
         bool useDefaults = platformName == "" || deviceName == "";
 #if defined(GUI)
-        bool gui = benchmark == "";
+        bool gui = benchmarkName == "";
 #else
         bool gui = false;
 #endif
@@ -99,35 +101,49 @@ int main(int argc, char **argv) {
         }
 #endif
 
+        if (benchmarkName == "list") {
+            MazeState state(ctx);
+            MazeManager manager(ctx, q, state);
+
+            for (auto generator : manager.generators())
+                cout << generator->name() << endl;
+            for (auto solver : manager.solvers())
+                cout << solver->name() << endl;
+            return 0;
+        }
+
+        benchmark::Benchmark benchmark{
+            stoi(getEnvOr("BENCHMARK_SIZE", "256")),
+            stoi(getEnvOr("BENCHMARK_WARMUP", "256")),
+            stoi(getEnvOr("BENCHMARK_SAMPLES", "256")),
+            stoi(getEnvOr("BENCHMARK_SEED_START", "0")),
+            benchmarkName,
+            platform,
+            dev};
+
         MazeState state(ctx);
-        state.seed(6 * 7), state.size(state.minWidth(), state.minHeight());
+        state.seed(benchmark.seed), state.size(benchmark.size, benchmark.size);
         MazeManager manager(ctx, q, state);
 
         for (auto generator : manager.generators()) {
-            if (generator->name() != benchmark)
+            if (generator->name() != benchmarkName)
                 continue;
 
             manager.generator(generator);
-            dumpStatsHeader(platform, dev, benchmark);
-            mazeBenchmarkGenerator(manager);
+            benchmarkMazeGenerator(manager, benchmark);
             return 0;
         }
 
         for (auto solver : manager.solvers()) {
-            if (solver->name() != benchmark)
+            if (solver->name() != benchmarkName)
                 continue;
 
             manager.startSolving(solver);
-            dumpStatsHeader(platform, dev, benchmark);
-            mazeBenchmarkSolver(manager);
+            benchmarkMazeSolver(manager, benchmark);
             return 0;
         }
 
-        for (auto generator : manager.generators())
-            cout << generator->name() << endl;
-        for (auto solver : manager.solvers())
-            cout << solver->name() << endl;
-        return 0;
+        throw runtime_error("No such benchmark: " + benchmarkName);
     } catch (const BuildError &e) {
         cerr << format("OpenCL error: {} ({})", e.what(), e.err()) << endl;
 

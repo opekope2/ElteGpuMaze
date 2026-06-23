@@ -1,4 +1,5 @@
 #include "maze.hpp"
+#include "benchmark.hpp"
 #include "maze_generator.hpp"
 #include "maze_manager.hpp"
 #include "maze_renderer.hpp"
@@ -9,12 +10,9 @@
 #include <CL/cl.h>
 #include <CL/cl_platform.h>
 #include <CL/opencl.hpp>
-#include <algorithm>
-#include <cmath>
 #include <cstdint>
 #include <format>
 #include <iostream>
-#include <numeric>
 #include <vector>
 
 #if defined(GUI)
@@ -144,78 +142,49 @@ void mazeGui(GlfwWindow &win, Context &ctx, MazeManager &manager) {
 }
 #endif
 
-void dumpStatsHeader(Platform &platform, Device &device, string benchmark) {
-#if defined(__linux__)
-    cout << "Target OS: Linux" << endl;
-#elif defined(_WIN32) || defined(_WIN64)
-    cout << "Target OS: Windows" << endl;
-#else
-#error Operating system not supported
-#endif
+void benchmarkMazeGenerator(MazeManager &manager, benchmark::Benchmark &benchmark, bool warmup) {
+    MazeState &state = manager.state();
 
-    cout << "Platform: " << platform.getInfo<CL_PLATFORM_NAME>()
-         << "; Vendor: " << platform.getInfo<CL_PLATFORM_VENDOR>()
-         << "; Version: " << platform.getInfo<CL_PLATFORM_VERSION>()
-         << "; Profile: " << platform.getInfo<CL_PLATFORM_PROFILE>()
-         << endl;
-    cout << "Device: " << device.getInfo<CL_DEVICE_NAME>()
-         << "; Vendor: " << device.getInfo<CL_DEVICE_VENDOR>()
-         << "; Version: " << device.getInfo<CL_DEVICE_VERSION>()
-         << "; Profile: " << device.getInfo<CL_DEVICE_PROFILE>()
-         << "; Driver version: " << device.getInfo<CL_DRIVER_VERSION>()
-         << endl;
-    cout << "Benchmark: " << benchmark << endl;
-    cout << "Sample size: " << BENCHMARK_SAMPLE_SIZE << endl;
-    cout << endl;
-    cout << "width\theight\tmin\tq1\tmedian\tmean\tq3\tmax\tstddev" << endl;
+    cl_ulong ns = generateMaze(&manager);
+    if (!warmup)
+        benchmark::printResult(cout, benchmark, state.seed(), ns);
+
+    state.seed(state.seed() + 1);
 }
 
-void dumpStats(std::vector<cl_ulong> stats, cl_uint width, cl_uint height) {
-    sort(stats.begin(), stats.end());
-    auto n = stats.size();
-    auto min = stats[0];
-    auto q1 = (stats[n / 4 - 1] + stats[n / 4]) / 2.0;
-    auto median = (stats[n / 2 - 1] + stats[n / 2]) / 2.0;
-    auto mean = accumulate(stats.begin(), stats.end(), 0.0) / n;
-    auto q3 = (stats[n * 3 / 4 - 1] + stats[n * 3 / 4]) / 2.0;
-    auto max = stats[n - 1];
-    std::vector<double> varHelper;
-    for (auto time : stats)
-        varHelper.push_back((time - mean) * (time - mean));
-    auto var = accumulate(varHelper.begin(), varHelper.end(), 0.0) / varHelper.size();
-    auto stddev = sqrt(var);
-    cout << format("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}", width, height, min, q1, median, mean, q3, max, stddev) << endl;
+void benchmarkMazeGenerator(MazeManager &manager, benchmark::Benchmark &benchmark) {
+    cout << benchmark::HEADER << endl;
+
+    for (int i = 0; i < benchmark.warmup; i++)
+        benchmarkMazeGenerator(manager, benchmark, true);
+    for (int i = 0; i < benchmark.samples; i++)
+        benchmarkMazeGenerator(manager, benchmark, false);
 }
 
-void mazeBenchmarkGenerator(MazeManager &manager) {
-    std::vector<cl_ulong> ns;
-    for (MazeState &state = manager.state(); state.width() <= state.maxWidth() && state.height() <= state.maxHeight(); state.resize(state.width(), state.height())) {
-        for (int i = 0; i < BENCHMARK_SAMPLE_SIZE; i++)
-            state.seed(i), ns.push_back(generateMaze(&manager));
+void benchmarkMazeSolver(MazeManager &manager, benchmark::Benchmark &benchmark, MazeSolver *solver, bool warmup) {
+    MazeState &state = manager.state();
 
-        dumpStats(ns, state.width(), state.height());
-        ns.clear();
-    }
+    manager.resetSolver(true);
+    manager.startSolving(solver);
+
+    generateMaze(&manager);
+    while (!manager.stepSolve())
+        ;
+
+    cl_ulong ns = manager.solveNs();
+    if (!warmup)
+        benchmark::printResult(cout, benchmark, state.seed(), ns);
+
+    state.seed(state.seed() + 1);
 }
 
-void mazeBenchmarkSolver(MazeManager &manager) {
-    std::vector<cl_ulong> ns;
-    auto solver = manager.solver();
+void benchmarkMazeSolver(MazeManager &manager, benchmark::Benchmark &benchmark) {
+    cout << benchmark::HEADER << endl;
 
-    for (MazeState &state = manager.state(); state.width() <= state.maxWidth() && state.height() <= state.maxHeight(); state.resize(state.width(), state.height())) {
-        for (int i = 0; i < BENCHMARK_SAMPLE_SIZE; i++) {
-            state.seed(i);
-            generateMaze(&manager);
-            manager.startSolving(solver);
+    MazeSolver *solver = manager.solver();
 
-            while (!manager.stepSolve())
-                ;
-
-            ns.push_back(manager.solveNs());
-            manager.resetSolver(true);
-        }
-
-        dumpStats(ns, state.width(), state.height());
-        ns.clear();
-    }
+    for (int i = 0; i < benchmark.warmup; i++)
+        benchmarkMazeSolver(manager, benchmark, solver, true);
+    for (int i = 0; i < benchmark.samples; i++)
+        benchmarkMazeSolver(manager, benchmark, solver, false);
 }

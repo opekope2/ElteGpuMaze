@@ -52,8 +52,8 @@ You'll need `libepoxy-0.dll`, `libgcc_s_seh-1.dll`, `libstdc++-6.dll`, and `libw
 
 * ⬅️: Decrease maze width by 1
 * ➡️: Increase maze width by 1
-* ⬆️: Decrease maze height by 1
-* ⬇️: Increase maze height by 1
+* ⬆️: Increase maze height by 1
+* ⬇️: Decrease maze height by 1
 * `-`: Decrease maze seed by 1
 * `=`: Increase maze seed by 1
 * `P`: Generate maze using Sequential Prim algorithm
@@ -73,4 +73,12 @@ Specify the `PLATFORM=list` and `DEVICE=list` environment variables to print the
 
 ## Benchmark
 
-Specify the `BENCHMARK` environment variable to run a specific benchmark. If the benchmark doesn't exist, a list of all benchmarks will be printed.
+Specify the `BENCHMARK` environment variable to run a specific benchmark.
+Specify `BENCHMARK=list` to show a list of all benchmarks.
+
+### Supported environment variables
+
+* `BENCHMARK_SIZE`: The maze (square) size to benchmark
+* `BENCHMARK_WARMUP`: The number of times to run the maze generator/solver as warmup
+* `BENCHMARK_SAMPLES`: The number of times to run the maze generator/solver as part of the benchmark
+* `BENCHMARK_SEED_START`: The seed to start the warmup at. Benchmarking will start at seed `BENCHMARK_SEED_START+BENCHMARK_WARMUP`
