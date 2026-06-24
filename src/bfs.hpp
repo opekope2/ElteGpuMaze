@@ -6,6 +6,7 @@
 #include "util/cl.hpp"
 #include "util/maze.hpp"
 #include "util/misc.hpp"
+#include <CL/cl.h>
 #include <CL/cl_platform.h>
 #include <CL/opencl.hpp>
 #include <sys/types.h>
@@ -14,31 +15,59 @@ using namespace cl;
 
 namespace bfs {
 
-class ParallelBFS : public MazeSolver {
-private:
+class BFS : public MazeSolver {
+protected:
+    KernelFunctor<cl_uint2, Buffer> init;
     KernelFunctor<Buffer> mark;
     KernelFunctor<Buffer, Buffer> expand;
-    KernelFunctor<cl_uint, cl_uint, Buffer, Buffer> drawPath;
+    KernelFunctor<cl_uint, cl_uint, Buffer, Buffer, Buffer> drawPath;
 
 public:
-    ParallelBFS(Context &ctx)
+    BFS(Context &ctx)
         : MazeSolver(ctx, buildProgram(ctx, cl::Program::Sources{XXD_STRING(maze_cl), XXD_STRING(solver_cl), XXD_STRING(bfs_cl)})),
+          init(program, "init"),
           mark(program, "mark"),
           expand(program, "expand"),
           drawPath(program, "drawPath") {}
 
+    virtual bool stepSolve(CommandQueue &q, MazeState &state, std::vector<Event> &events) override {
+        EnqueueArgs args(q, NDRange(state.width(), state.height()));
+        Event expandEvent = expand(args, state.parent(), state.mazeData());
+        Event markEvent = mark(args, state.mazeData());
+
+        events.insert(events.end(), {expandEvent, markEvent});
+
+        return false;
+    }
+};
+
+class ParallelBFS : public BFS {
+public:
+    ParallelBFS(Context &ctx) : BFS(ctx) {}
+
     string name() override { return "Parallel Breadth-First Search"; }
 
-    bool stepSolve(CommandQueue &q, MazeState &state, std::vector<Event> &events) override {
-        size_type n = static_cast<size_type>(state.width()) * static_cast<size_type>(state.height());
+    void markInitialFrontiers(CommandQueue &q, MazeState &state, std::vector<Event> &events) override {
+        Event initEvent = init(
+            EnqueueArgs(q, NDRange(1)),
+            {0, VERTEX_INVALID},
+            state.mazeData());
 
-        EnqueueArgs args(q, NDRange(state.width(), state.height()));
-        Event markEvent = mark(args, state.mazeData());
-        Event expandEvent = expand(args, state.parent(), state.mazeData());
+        q.finish();
+        events.push_back(initEvent);
+    }
+
+    bool stepSolve(CommandQueue &q, MazeState &state, std::vector<Event> &events) override {
+        BFS::stepSolve(q, state, events);
+
+        size_type n = static_cast<size_type>(state.width()) * static_cast<size_type>(state.height());
+        vertex_t vege = state.width() * state.height() - 1;
+        Buffer meet(ctx, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(vertex_t), &vege);
         Event drawPathEvent = drawPath(
             EnqueueArgs(q, NDRange(1)),
             state.width(),
             state.height(),
+            meet,
             state.parent(),
             state.mazeData());
 
@@ -46,9 +75,54 @@ public:
         q.enqueueReadBuffer(state.mazeData(), CL_FALSE, sizeof(maze_data_t) * (n - 1), sizeof(maze_data_t), &lastCell);
 
         q.finish();
-        events.insert(events.end(), {markEvent, expandEvent, drawPathEvent});
 
         return (lastCell & SEARCH_EXPLORED) != 0;
+    }
+};
+
+class Parallel2WayBFS : public BFS {
+private:
+    KernelFunctor<Buffer, Buffer> vege_van;
+
+public:
+    Parallel2WayBFS(Context &ctx) : BFS(ctx), vege_van(program, "vege_van") {}
+
+    string name() override { return "Parallel 2-Way Breadth-First Search"; }
+
+    void markInitialFrontiers(CommandQueue &q, MazeState &state, std::vector<Event> &events) override {
+        Event initEvent = init(
+            EnqueueArgs(q, NDRange(2)),
+            {0, state.width() * state.height() - 1},
+            state.mazeData());
+
+        q.finish();
+        events.push_back(initEvent);
+    }
+
+    bool stepSolve(CommandQueue &q, MazeState &state, std::vector<Event> &events) override {
+        BFS::stepSolve(q, state, events);
+
+        vertex_t vege = VERTEX_INVALID;
+        Buffer meet(ctx, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(vertex_t), &vege);
+
+        Event vege_van_event = vege_van(
+            EnqueueArgs(q, NDRange(state.width(), state.height())),
+            state.mazeData(),
+            meet);
+        Event drawPathEvent = drawPath(
+            EnqueueArgs(q, NDRange(2)),
+            state.width(),
+            state.height(),
+            meet,
+            state.parent(),
+            state.mazeData());
+
+        q.enqueueReadBuffer(meet, CL_FALSE, 0, sizeof(vertex_t), &vege);
+
+        q.finish();
+        events.insert(events.end(), {vege_van_event, drawPathEvent});
+
+        return ~vege;
     }
 };
 

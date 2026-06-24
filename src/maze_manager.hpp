@@ -28,8 +28,9 @@ private:
     std::vector<MazeGenerator *> _generators{&_seqPrim, &_parKruskal, &_seqBoruvka};
 
     bfs::ParallelBFS _parBfs;
+    bfs::Parallel2WayBFS _par2WayBfs;
     MazeSolver *_solver = nullptr;
-    std::vector<MazeSolver *> _solvers{&_parBfs};
+    std::vector<MazeSolver *> _solvers{&_parBfs, &_par2WayBfs};
 
     bool _solved = false;
     cl_ulong _solveNs = 0;
@@ -42,7 +43,8 @@ public:
           _seqPrim(ctx),
           _parKruskal(ctx),
           _seqBoruvka(ctx),
-          _parBfs(ctx) {}
+          _parBfs(ctx),
+          _par2WayBfs(ctx) {}
 
     CommandQueue &queue() { return _q; }
 
@@ -57,10 +59,20 @@ public:
     void generator(MazeGenerator *gen) { _generator = gen; }
 
     MazeSolver *parallelBfs() { return &_parBfs; }
+    MazeSolver *parallel2WayBfs() { return &_par2WayBfs; }
     MazeSolver *solver() { return _solver; }
     std::vector<MazeSolver *> &solvers() { return _solvers; }
 
-    void startSolving(MazeSolver *solver) { _solver = solver; }
+    void startSolving(MazeSolver *solver) {
+        _solver = solver;
+
+        size_type n = static_cast<size_type>(_state.width()) * static_cast<size_type>(_state.height());
+        _q.enqueueFillBuffer<vertex_t>(_state.parent(), VERTEX_INVALID, 0, sizeof(vertex_t) * n);
+
+        std::vector<Event> events;
+        _solver->markInitialFrontiers(_q, _state, events);
+        _solveNs += getProfilingTimeNs(events);
+    }
 
     bool solved() { return _solved; }
     bool solving() { return _solver != nullptr; }

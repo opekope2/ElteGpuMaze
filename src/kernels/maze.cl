@@ -7,8 +7,6 @@
 #define SEARCH_FRONTIER 0x20u
 #define SEARCH_PATH 0x40u
 
-#define DEBUG 0x80u
-
 #define VERTEX_INVALID UINT_MAX
 #define NEIGHBOR_INVALID UINT_MAX
 
