@@ -3,11 +3,19 @@
         {
             "type": "gdb",
             "request": "launch",
-            "name": "Debug",
+            "name": "Build & Debug",
             "target": "${workspaceRoot}/bin/maze",
             "cwd": "${workspaceRoot}",
             "valuesFormatting": "parseText",
             "preLaunchTask": "Build"
+        },
+        {
+            "type": "gdb",
+            "request": "launch",
+            "name": "Debug",
+            "target": "${workspaceRoot}/bin/maze",
+            "cwd": "${workspaceRoot}",
+            "valuesFormatting": "parseText"
         }
     ]
 }
