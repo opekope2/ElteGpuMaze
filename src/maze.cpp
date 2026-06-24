@@ -87,6 +87,8 @@ void handleInput(GLFWwindow *window, int key, int scancode, int action, int mods
         manager->generator(manager->sequentialBoruvka()), regenerate = true;
     if (key == GLFW_KEY_W && action != GLFW_RELEASE && !manager->solving() && !manager->solved())
         manager->startSolving(manager->parallelBfs());
+    if (key == GLFW_KEY_S && action != GLFW_RELEASE && !manager->solving() && !manager->solved())
+        manager->startSolving(manager->parallel2WayBfs());
 
     if (key == GLFW_KEY_SPACE && action != GLFW_RELEASE)
         speed = !speed;
