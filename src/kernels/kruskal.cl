@@ -5,7 +5,6 @@ kernel void kruskal(dsu_size_t n,
                     const global Edge *e,
                     global maze_data_t *mazeData) {
     DSU dsu = {n, dsuSize, dsuParent};
-    dsu_init(&dsu);
 
     for (dsu_size_t i = 0; i < m; i++) {
         Edge edge = e[i];

@@ -18,6 +18,7 @@ namespace kruskal {
 
 class ParallelSortedKruskal : public MazeGenerator {
 private:
+    KernelFunctor<Buffer, Buffer> dsuInit;
     KernelFunctor<cl_uint, Buffer> generateEdges;
     KernelFunctor<dsu_size_t, dsu_size_t, Buffer> bitonicSwap;
     KernelFunctor<dsu_size_t, cl_uint, Buffer, Buffer, Buffer, Buffer> kruskal;
@@ -25,6 +26,7 @@ private:
 public:
     ParallelSortedKruskal(Context &ctx)
         : MazeGenerator(ctx, buildProgram(ctx, cl::Program::Sources{XXD_STRING(maze_cl), XXD_STRING(dsu_cl), XXD_STRING(generator_cl), XXD_STRING(bitonic_sort_cl), XXD_STRING(kruskal_cl)})),
+          dsuInit(program, "dsu_init"),
           generateEdges(program, "generateEdges"),
           bitonicSwap(program, "bitonicSwap"),
           kruskal(program, "kruskal") {}
@@ -44,11 +46,15 @@ public:
         q.enqueueFillBuffer<cl_uint>(edges, UINT_MAX, sizeof(Edge) * m, sizeof(Edge) * (m2 - m));
         q.enqueueFillBuffer<maze_data_t>(state.mazeData(), WALL_TOP | WALL_RIGHT | WALL_BOTTOM | WALL_LEFT, 0, sizeof(maze_data_t) * n);
 
+        Event dsuInitEvent = dsuInit(
+            EnqueueArgs(q, NDRange(n)),
+            dsuSize,
+            dsuParent);
         Event generateEdgesEvent = generateEdges(
             EnqueueArgs(q, NDRange(state.width(), state.height())),
             state.seed(),
             edges);
-        events.push_back(generateEdgesEvent);
+        events.insert(events.end(), {dsuInitEvent, generateEdgesEvent});
         parallelBitonicMergeSort(q, bitonicSwap, m2, edges, events);
         Event generateEvent = kruskal(
             EnqueueArgs(q, NDRange(1)),

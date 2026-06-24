@@ -12,15 +12,11 @@ typedef struct DSU {
     global vertex_t *parent;
 } DSU;
 
-void dsu_init(DSU *dsu) {
-    global dsu_size_t *size = dsu->size;
-    global vertex_t *parent = dsu->parent;
-    dsu_size_t n = dsu->n;
+kernel void dsu_init(global dsu_size_t *size, global vertex_t *parent) {
+    vertex_t i = get_global_id(0);
 
-    for (dsu_size_t i = 0; i < n; i++) {
-        size[i] = 1;
-        parent[i] = i;
-    }
+    size[i] = 1;
+    parent[i] = i;
 }
 
 vertex_t dsu_find(DSU *dsu, vertex_t v) {

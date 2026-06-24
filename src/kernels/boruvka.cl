@@ -6,7 +6,6 @@ kernel void boruvka(dsu_size_t n,
                     const global Edge *e,
                     global maze_data_t *maze_data) {
     DSU dsu = {n, dsu_size, dsu_parent};
-    dsu_init(&dsu);
     dsu_size_t comp = n;
     while (comp > 1) {
         for (dsu_size_t i = 0; i < n; i++)

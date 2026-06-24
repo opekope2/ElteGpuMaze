@@ -18,12 +18,14 @@ namespace boruvka {
 
 class SequentialBoruvka : public MazeGenerator {
 private:
+    KernelFunctor<Buffer, Buffer> dsu_init;
     KernelFunctor<cl_uint, Buffer> generateEdges;
     KernelFunctor<dsu_size_t, cl_uint, Buffer, Buffer, Buffer, Buffer, Buffer> boruvka;
 
 public:
     SequentialBoruvka(Context &ctx)
         : MazeGenerator(ctx, buildProgram(ctx, cl::Program::Sources{XXD_STRING(maze_cl), XXD_STRING(dsu_cl), XXD_STRING(generator_cl), XXD_STRING(boruvka_cl)})),
+          dsu_init(program, "dsu_init"),
           generateEdges(program, "generateEdges"),
           boruvka(program, "boruvka") {}
 
@@ -41,6 +43,10 @@ public:
 
         q.enqueueFillBuffer<maze_data_t>(state.mazeData(), WALL_TOP | WALL_RIGHT | WALL_BOTTOM | WALL_LEFT, 0, sizeof(maze_data_t) * n);
 
+        Event dsuInitEvent = dsu_init(
+            EnqueueArgs(q, NDRange(n)),
+            dsu_size,
+            dsu_parent);
         Event generateEdgesEvent = generateEdges(
             EnqueueArgs(q, NDRange(state.width(), state.height())),
             state.seed(),
@@ -56,8 +62,7 @@ public:
             state.mazeData());
 
         q.finish();
-        events.push_back(generateEdgesEvent);
-        events.push_back(generateEvent);
+        events.insert(events.end(), {dsuInitEvent, generateEdgesEvent, generateEvent});
     }
 };
 
