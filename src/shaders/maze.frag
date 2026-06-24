@@ -16,8 +16,6 @@ const uint SEARCH_EXPLORED = 0x10u;
 const uint SEARCH_FRONTIER = 0x20u;
 const uint SEARCH_PATH = 0x40u;
 
-const uint DEBUG = 0x80u;
-
 const vec4 BLACK = vec4(0, 0, 0, 1);
 const vec4 RED = vec4(1, 0, 0, 1);
 const vec4 GREEN = vec4(0, 1, 0, 1);
@@ -62,8 +60,6 @@ void main() {
         FragColor = YELLOW;
     else if (HAS_FLAGS(mazeData, SEARCH_EXPLORED))
         FragColor = BLUE;
-    else if (HAS_FLAGS(mazeData, DEBUG))
-        FragColor = MAGENTA;
     else
         FragColor = BLACK;
 }
