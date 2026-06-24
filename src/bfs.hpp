@@ -42,8 +42,8 @@ public:
         size_type n = static_cast<size_type>(state.width()) * static_cast<size_type>(state.height());
 
         EnqueueArgs args(q, NDRange(state.width(), state.height()));
-        Event markEvent = mark(args, state.mazeData());
         Event expandEvent = expand(args, state.parent(), state.mazeData());
+        Event markEvent = mark(args, state.mazeData());
         Event drawPathEvent = drawPath(
             EnqueueArgs(q, NDRange(1)),
             state.width(),
@@ -55,7 +55,7 @@ public:
         q.enqueueReadBuffer(state.mazeData(), CL_FALSE, sizeof(maze_data_t) * (n - 1), sizeof(maze_data_t), &lastCell);
 
         q.finish();
-        events.insert(events.end(), {markEvent, expandEvent, drawPathEvent});
+        events.insert(events.end(), {expandEvent, markEvent, drawPathEvent});
 
         return (lastCell & SEARCH_EXPLORED) != 0;
     }
