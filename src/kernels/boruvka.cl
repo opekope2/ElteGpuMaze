@@ -34,6 +34,4 @@ kernel void boruvka(dsu_size_t n,
             }
         }
     }
-
-    maze_data[0] |= SEARCH_FRONTIER;
 }

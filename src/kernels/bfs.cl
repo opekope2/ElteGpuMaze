@@ -2,6 +2,10 @@
 #define EXPAND(c) ((c & (SEARCH_EXPLORED | SEARCH_FRONTIER)) == (SEARCH_EXPLORED | SEARCH_FRONTIER))
 #define HAS_NO_WALL(c, w) ((c & w) == 0)
 
+kernel void init(uint frontier, maze_data_buffer_t mazeData) {
+    mazeData[frontier] |= SEARCH_FRONTIER;
+}
+
 kernel void mark(maze_data_buffer_t mazeData) {
     uint x = get_global_id(0);
     uint y = get_global_id(1);

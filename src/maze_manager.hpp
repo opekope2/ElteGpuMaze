@@ -60,7 +60,12 @@ public:
     MazeSolver *solver() { return _solver; }
     std::vector<MazeSolver *> &solvers() { return _solvers; }
 
-    void startSolving(MazeSolver *solver) { _solver = solver; }
+    void startSolving(MazeSolver *solver) {
+        _solver = solver;
+        std::vector<Event> events;
+        _solver->markInitialFrontiers(_q, _state, events);
+        _solveNs += getProfilingTimeNs(events);
+    }
 
     bool solved() { return _solved; }
     bool solving() { return _solver != nullptr; }

@@ -23,6 +23,4 @@ kernel void kruskal(dsu_size_t n,
         dsu_union(&dsu, u, v);
         deleteWall(mazeData, edge.u, edge.v);
     }
-
-    mazeData[0] |= SEARCH_FRONTIER;
 }

@@ -43,6 +43,4 @@ kernel void seqPrim(uint width,
 
         deleteWall(mazeData, i, j);
     }
-
-    mazeData[0] |= SEARCH_FRONTIER;
 }

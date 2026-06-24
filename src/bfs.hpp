@@ -16,6 +16,7 @@ namespace bfs {
 
 class ParallelBFS : public MazeSolver {
 private:
+    KernelFunctor<cl_uint, Buffer> init;
     KernelFunctor<Buffer> mark;
     KernelFunctor<Buffer, Buffer> expand;
     KernelFunctor<cl_uint, cl_uint, Buffer, Buffer> drawPath;
@@ -23,11 +24,19 @@ private:
 public:
     ParallelBFS(Context &ctx)
         : MazeSolver(ctx, buildProgram(ctx, cl::Program::Sources{XXD_STRING(maze_cl), XXD_STRING(solver_cl), XXD_STRING(bfs_cl)})),
+          init(program, "init"),
           mark(program, "mark"),
           expand(program, "expand"),
           drawPath(program, "drawPath") {}
 
     string name() override { return "Parallel Breadth-First Search"; }
+
+    void markInitialFrontiers(CommandQueue &q, MazeState &state, std::vector<Event> &events) override {
+        Event initEvent = init(EnqueueArgs(q, NDRange(1)), 0, state.mazeData());
+
+        q.finish();
+        events.push_back(initEvent);
+    }
 
     bool stepSolve(CommandQueue &q, MazeState &state, std::vector<Event> &events) override {
         size_type n = static_cast<size_type>(state.width()) * static_cast<size_type>(state.height());
