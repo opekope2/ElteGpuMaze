@@ -6,18 +6,6 @@ kernel void init(uint frontier, maze_data_buffer_t mazeData) {
     mazeData[frontier] |= SEARCH_EXPLORED | SEARCH_FRONTIER;
 }
 
-kernel void mark(maze_data_buffer_t mazeData) {
-    uint x = get_global_id(0);
-    uint y = get_global_id(1);
-    uint w = get_global_size(0);
-
-    vertex_t v = x + y * w;
-    if (FRONTIER(mazeData[v]))
-        mazeData[v] |= SEARCH_EXPLORED;
-    else if (EXPAND_FROM(mazeData[v]))
-        mazeData[v] &= ~SEARCH_FRONTIER;
-}
-
 kernel void expand(global vertex_t *parent, maze_data_buffer_t mazeData) {
     uint x = get_global_id(0);
     uint y = get_global_id(1);
@@ -39,4 +27,16 @@ kernel void expand(global vertex_t *parent, maze_data_buffer_t mazeData) {
             break;
         }
     }
+}
+
+kernel void mark(maze_data_buffer_t mazeData) {
+    uint x = get_global_id(0);
+    uint y = get_global_id(1);
+    uint w = get_global_size(0);
+
+    vertex_t v = x + y * w;
+    if (FRONTIER(mazeData[v]))
+        mazeData[v] |= SEARCH_EXPLORED;
+    else if (EXPAND_FROM(mazeData[v]))
+        mazeData[v] &= ~SEARCH_FRONTIER;
 }
