@@ -75,6 +75,7 @@ public:
         q.enqueueReadBuffer(state.mazeData(), CL_FALSE, sizeof(maze_data_t) * (n - 1), sizeof(maze_data_t), &lastCell);
 
         q.finish();
+        events.push_back(drawPathEvent);
 
         return (lastCell & SEARCH_EXPLORED) != 0;
     }
