@@ -172,10 +172,10 @@ void benchmarkMazeGenerator(MazeManager &manager, benchmark::Benchmark &benchmar
 void benchmarkMazeSolver(MazeManager &manager, benchmark::Benchmark &benchmark, MazeSolver *solver, bool warmup) {
     MazeState &state = manager.state();
 
+    generateMaze(&manager);
+
     manager.resetSolver(true);
     manager.startSolving(solver);
-
-    generateMaze(&manager);
     while (!manager.stepSolve())
         ;
 
