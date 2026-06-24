@@ -61,23 +61,26 @@ public:
         BFS::stepSolve(q, state, events);
 
         size_type n = static_cast<size_type>(state.width()) * static_cast<size_type>(state.height());
-        vertex_t vege = state.width() * state.height() - 1;
-        Buffer meet(ctx, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(vertex_t), &vege);
-        Event drawPathEvent = drawPath(
-            EnqueueArgs(q, NDRange(1)),
-            state.width(),
-            state.height(),
-            meet,
-            state.parent(),
-            state.mazeData());
-
         maze_data_t lastCell;
-        q.enqueueReadBuffer(state.mazeData(), CL_FALSE, sizeof(maze_data_t) * (n - 1), sizeof(maze_data_t), &lastCell);
+        q.enqueueReadBuffer(state.mazeData(), CL_TRUE, sizeof(maze_data_t) * (n - 1), sizeof(maze_data_t), &lastCell);
+        bool done = (lastCell & SEARCH_EXPLORED) != 0;
+
+        if (done) {
+            vertex_t vege = state.width() * state.height() - 1;
+            Buffer meet(ctx, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(vertex_t), &vege);
+            Event drawPathEvent = drawPath(
+                EnqueueArgs(q, NDRange(1)),
+                state.width(),
+                state.height(),
+                meet,
+                state.parent(),
+                state.mazeData());
+            events.push_back(drawPathEvent);
+        }
 
         q.finish();
-        events.push_back(drawPathEvent);
 
-        return (lastCell & SEARCH_EXPLORED) != 0;
+        return done;
     }
 };
 
@@ -110,18 +113,21 @@ public:
             EnqueueArgs(q, NDRange(state.width(), state.height())),
             state.mazeData(),
             meet);
-        Event drawPathEvent = drawPath(
-            EnqueueArgs(q, NDRange(2)),
-            state.width(),
-            state.height(),
-            meet,
-            state.parent(),
-            state.mazeData());
+        events.push_back(vege_van_event);
+        q.enqueueReadBuffer(meet, CL_TRUE, 0, sizeof(vertex_t), &vege);
 
-        q.enqueueReadBuffer(meet, CL_FALSE, 0, sizeof(vertex_t), &vege);
+        if (~vege) {
+            Event drawPathEvent = drawPath(
+                EnqueueArgs(q, NDRange(2)),
+                state.width(),
+                state.height(),
+                meet,
+                state.parent(),
+                state.mazeData());
+            events.push_back(drawPathEvent);
+        }
 
         q.finish();
-        events.insert(events.end(), {vege_van_event, drawPathEvent});
 
         return ~vege;
     }
