@@ -11,8 +11,9 @@
 #define NEIGHBOR_INVALID UINT_MAX
 
 typedef uint vertex_t;
+typedef uint2 vertex2_t;
+typedef uint4 vertex4_t;
 typedef uchar maze_data_t;
-typedef global maze_data_t *maze_data_buffer_t;
 
 uint weight(uint seed, uint stride, uint a, uint b) {
     uint x = min(a, b);
@@ -45,7 +46,7 @@ uint4 getNeighbors(uint w, uint h, uint id) {
     return (uint4)(top, right, bottom, left);
 }
 
-void deleteWall(maze_data_buffer_t mazeData, vertex_t a, vertex_t b) {
+void deleteWall(global maze_data_t *mazeData, vertex_t a, vertex_t b) {
     vertex_t u = min(a, b), v = max(a, b);
 
     if (u == v - 1) { // Horizontal

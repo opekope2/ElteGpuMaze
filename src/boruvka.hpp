@@ -35,7 +35,7 @@ public:
 
         // Does not fit into local memory on moderately large mazes, which resets my GPU
         Buffer dsu_size(ctx, CL_MEM_READ_WRITE, sizeof(dsu_size_t) * n);
-        Buffer dsu_parent(ctx, CL_MEM_READ_WRITE, sizeof(dsu_vertex_t) * n);
+        Buffer dsu_parent(ctx, CL_MEM_READ_WRITE, sizeof(vertex_t) * n);
         Buffer minout(ctx, CL_MEM_READ_WRITE, sizeof(cl_uint) * n);
         Buffer edges_buffer(ctx, CL_MEM_READ_WRITE, sizeof(Edge) * m);
 

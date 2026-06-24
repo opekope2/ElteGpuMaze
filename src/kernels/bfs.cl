@@ -4,19 +4,19 @@
 
 #define BFS_ORIGIN_END 0x80u
 
-kernel void init(uint2 frontiers, maze_data_buffer_t mazeData) {
+kernel void init(vertex2_t frontiers, global maze_data_t *mazeData) {
     uint id = get_global_id(0);
     mazeData[frontiers[id]] |= SEARCH_EXPLORED | SEARCH_FRONTIER | (id * BFS_ORIGIN_END);
 }
 
-kernel void expand(global vertex_t *parent, maze_data_buffer_t mazeData) {
+kernel void expand(global vertex_t *parent, global maze_data_t *mazeData) {
     uint x = get_global_id(0);
     uint y = get_global_id(1);
     uint w = get_global_size(0);
     uint h = get_global_size(1);
 
     vertex_t v = x + y * w;
-    uint4 neighbors = getNeighbors(w, h, v);
+    vertex4_t neighbors = getNeighbors(w, h, v);
     maze_data_t vertexData = mazeData[v];
 
     if (EXPLORED(vertexData))
@@ -34,7 +34,7 @@ kernel void expand(global vertex_t *parent, maze_data_buffer_t mazeData) {
     }
 }
 
-kernel void mark(maze_data_buffer_t mazeData) {
+kernel void mark(global maze_data_t *mazeData) {
     uint x = get_global_id(0);
     uint y = get_global_id(1);
     uint w = get_global_size(0);
@@ -46,14 +46,14 @@ kernel void mark(maze_data_buffer_t mazeData) {
         mazeData[v] &= ~SEARCH_FRONTIER;
 }
 
-kernel void vege_van(maze_data_buffer_t mazeData, global vertex_t *meet) {
+kernel void vege_van(const global maze_data_t *mazeData, global vertex_t *meet) {
     uint x = get_global_id(0);
     uint y = get_global_id(1);
     uint w = get_global_size(0);
     uint h = get_global_size(1);
     vertex_t v = x + y * w;
 
-    uint4 neighbors = getNeighbors(w, h, v);
+    vertex4_t neighbors = getNeighbors(w, h, v);
     maze_data_t vertexData = mazeData[v];
 
     if (UNEXPLORED(vertexData))
@@ -68,14 +68,14 @@ kernel void vege_van(maze_data_buffer_t mazeData, global vertex_t *meet) {
     }
 }
 
-kernel void drawPath(uint width, uint height, global vertex_t *meet, global vertex_t *parent, maze_data_buffer_t mazeData) {
+kernel void drawPath(uint width, uint height, const global vertex_t *meet, const global vertex_t *parent, global maze_data_t *mazeData) {
     uint id = get_global_id(0);
-    uint2 start = (uint2)(*meet, VERTEX_INVALID);
+    vertex2_t start = (vertex2_t)(*meet, VERTEX_INVALID);
     if (UNEXPLORED(mazeData[start.x]))
         return;
 
     maze_data_t vertexData = mazeData[start.x];
-    uint4 neighbors = getNeighbors(width, height, start.x);
+    vertex4_t neighbors = getNeighbors(width, height, start.x);
 
     for (int i = 0; i < 4; i++) {
         vertex_t neighbor = neighbors[i];

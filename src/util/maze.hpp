@@ -15,4 +15,6 @@
 #define VERTEX_INVALID UINT_MAX
 
 typedef cl_uint vertex_t;
+typedef cl_uint2 vertex2_t;
+typedef cl_uint4 vertex4_t;
 typedef cl_uchar maze_data_t;

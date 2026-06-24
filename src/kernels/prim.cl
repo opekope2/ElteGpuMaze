@@ -7,7 +7,7 @@ kernel void seqPrim(uint width,
                     global vertex_t *heap,
                     global vertex_t *lookup,
                     global uint *priorities,
-                    maze_data_buffer_t mazeData) {
+                    global maze_data_t *mazeData) {
     uint n = width * height;
     Heap h = {0, heap, lookup, priorities}; // TODO Fibonacci heap
 
@@ -22,7 +22,7 @@ kernel void seqPrim(uint width,
 
         SET_REMOVE(unexplored, currentVertex);
 
-        uint4 neighbors = getNeighbors(width, height, currentVertex);
+        vertex4_t neighbors = getNeighbors(width, height, currentVertex);
         for (uint i = 0; i < 4; i++) {
             vertex_t neighbor = neighbors[i];
             if (neighbor == VERTEX_INVALID)

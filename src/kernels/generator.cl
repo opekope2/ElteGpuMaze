@@ -5,7 +5,7 @@ kernel void generateEdges(uint seed, global Edge *e) {
     uint h = get_global_size(1);
     uint o = (w - 1) * h;
 
-    dsu_vertex_t v = x + y * w;
+    vertex_t v = x + y * w;
 
     uint u1 = x - 1 + y * (w - 1);
     uint u2 = x + (y - 1) * w;

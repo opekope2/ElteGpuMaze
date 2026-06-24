@@ -1,9 +1,9 @@
 kernel void kruskal(dsu_size_t n,
                     uint m,
                     global dsu_size_t *dsuSize,
-                    global dsu_vertex_t *dsuParent,
-                    global Edge *e,
-                    maze_data_buffer_t mazeData) {
+                    global vertex_t *dsuParent,
+                    const global Edge *e,
+                    global maze_data_t *mazeData) {
     DSU dsu = {n, dsuSize, dsuParent};
     dsu_init(&dsu);
 
@@ -15,8 +15,8 @@ kernel void kruskal(dsu_size_t n,
             continue;
         }
 
-        dsu_vertex_t u = dsu_find(&dsu, edge.u);
-        dsu_vertex_t v = dsu_find(&dsu, edge.v);
+        vertex_t u = dsu_find(&dsu, edge.u);
+        vertex_t v = dsu_find(&dsu, edge.v);
         if (u == v)
             continue;
 

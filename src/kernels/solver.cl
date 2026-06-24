@@ -1,7 +1,7 @@
 #define EXPLORED(c) ((c & SEARCH_EXPLORED) != 0)
 #define UNEXPLORED(c) ((c & SEARCH_EXPLORED) == 0)
 
-kernel void clearPath(maze_data_buffer_t mazeData) {
+kernel void clearPath(global maze_data_t *mazeData) {
     uint x = get_global_id(0);
     uint y = get_global_id(1);
     uint w = get_global_size(0);

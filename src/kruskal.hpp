@@ -38,7 +38,7 @@ public:
 
         // Does not fit into local memory on moderately large mazes, which resets my GPU
         Buffer dsuSize(ctx, CL_MEM_READ_WRITE, sizeof(dsu_size_t) * n);
-        Buffer dsuParent(ctx, CL_MEM_READ_WRITE, sizeof(dsu_vertex_t) * n);
+        Buffer dsuParent(ctx, CL_MEM_READ_WRITE, sizeof(vertex_t) * n);
         Buffer edges(ctx, CL_MEM_READ_WRITE, sizeof(Edge) * m2);
 
         q.enqueueFillBuffer<cl_uint>(edges, UINT_MAX, sizeof(Edge) * m, sizeof(Edge) * (m2 - m));

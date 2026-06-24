@@ -17,7 +17,7 @@ namespace bfs {
 
 class BFS : public MazeSolver {
 protected:
-    KernelFunctor<cl_uint2, Buffer> init;
+    KernelFunctor<vertex2_t, Buffer> init;
     KernelFunctor<Buffer> mark;
     KernelFunctor<Buffer, Buffer> expand;
     KernelFunctor<cl_uint, cl_uint, Buffer, Buffer, Buffer> drawPath;
