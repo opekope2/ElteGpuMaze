@@ -61,7 +61,6 @@ public:
             edges_buffer,
             state.mazeData());
 
-        q.finish();
         events.insert(events.end(), {dsuInitEvent, generateEdgesEvent, generateEvent});
     }
 };

@@ -65,7 +65,6 @@ public:
             edges,
             state.mazeData());
 
-        q.finish();
         events.push_back(generateEvent);
     }
 };

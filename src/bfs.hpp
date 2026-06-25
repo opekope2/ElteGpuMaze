@@ -56,7 +56,6 @@ public:
             {0, VERTEX_INVALID},
             state.mazeData());
 
-        q.finish();
         events.push_back(initEvent);
     }
 
@@ -97,7 +96,6 @@ public:
             {0, state.width() * state.height() - 1},
             state.mazeData());
 
-        q.finish();
         events.push_back(initEvent);
     }
 

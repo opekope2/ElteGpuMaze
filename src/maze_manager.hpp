@@ -71,6 +71,7 @@ public:
 
         std::vector<Event> events;
         _solver->markInitialFrontiers(_q, _state, events);
+        _q.finish();
         _solveNs += getProfilingTimeNs(events);
     }
 
@@ -92,6 +93,7 @@ public:
                 break;
             }
 
+        _q.finish();
         _solveNs += getProfilingTimeNs(events);
         return _solved;
     }
