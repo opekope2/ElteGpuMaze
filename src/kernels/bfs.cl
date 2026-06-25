@@ -49,14 +49,19 @@ kernel void mark(global maze_data_t *mazeData) {
         mazeData[v] &= ~SEARCH_FRONTIER;
 }
 
-kernel void vege_van(const global maze_data_t *mazeData, global vertex_t *meet) {
+kernel void vege_van(uint width, uint height, const global maze_data_t *mazeData, global vertex_t *meet) {
+    uint n = width * height;
+    maze_data_t vege = mazeData[n - 1];
+    if (vege & SEARCH_EXPLORED)
+        *meet = n - 1;
+}
+
+kernel void vege_van_2(uint width, uint height, const global maze_data_t *mazeData, global vertex_t *meet) {
     uint x = get_global_id(0);
     uint y = get_global_id(1);
-    uint w = get_global_size(0);
-    uint h = get_global_size(1);
-    vertex_t v = x + y * w;
+    vertex_t v = x + y * width;
 
-    vertex4_t neighbors = getNeighbors(w, h, v);
+    vertex4_t neighbors = getNeighbors(width, height, v);
     maze_data_t vertexData = mazeData[v];
 
     if (UNEXPLORED(vertexData))
