@@ -24,6 +24,9 @@ kernel void expand(global vertex_t *parent, global maze_data_t *mazeData) {
 
     for (int i = 0; i < 4; i++) {
         vertex_t neighbor = neighbors[i];
+        if (neighbor == VERTEX_INVALID)
+            continue;
+
         maze_data_t neighborData = mazeData[neighbor];
 
         if (HAS_NO_WALL(vertexData, 1 << i) && EXPAND_FROM(neighborData)) {
@@ -61,6 +64,9 @@ kernel void vege_van(const global maze_data_t *mazeData, global vertex_t *meet) 
 
     for (int i = 0; i < 4; i++) {
         vertex_t neighbor = neighbors[i];
+        if (neighbor == VERTEX_INVALID)
+            continue;
+
         maze_data_t neighborData = mazeData[neighbor];
 
         if (HAS_NO_WALL(vertexData, 1 << i) && EXPLORED(neighborData) && ((vertexData ^ neighborData) & BFS_ORIGIN_END))
@@ -79,6 +85,9 @@ kernel void drawPath(uint width, uint height, const global vertex_t *meet, const
 
     for (int i = 0; i < 4; i++) {
         vertex_t neighbor = neighbors[i];
+        if (neighbor == VERTEX_INVALID)
+            continue;
+
         maze_data_t neighborData = mazeData[neighbor];
 
         if (HAS_NO_WALL(vertexData, 1 << i) && EXPLORED(neighborData) && ((vertexData ^ neighborData) & BFS_ORIGIN_END))
