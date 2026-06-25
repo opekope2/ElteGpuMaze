@@ -98,7 +98,7 @@ void handleInput(GLFWwindow *window, int key, int scancode, int action, int mods
     if (key == GLFW_KEY_RIGHT_BRACKET && action != GLFW_RELEASE)
         speed += AMOUNT(mods);
     if (key == GLFW_KEY_PERIOD && action != GLFW_RELEASE && !speed)
-        manager->solvingSpeed(1), step(manager), manager->solvingSpeed(0);
+        manager->solvingSpeed(AMOUNT(mods)), step(manager), manager->solvingSpeed(0);
 
     if (key == GLFW_KEY_Q && action != GLFW_RELEASE)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
