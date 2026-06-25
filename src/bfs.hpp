@@ -41,6 +41,8 @@ public:
     virtual vertex2_t getInitialFrontiers(MazeState &state) = 0;
 
     void markInitialFrontiers(CommandQueue &q, MazeState &state, std::vector<Event> &events) override {
+        q.enqueueFillBuffer<vertex_t>(meet, VERTEX_INVALID, 0, sizeof(vertex_t));
+
         Event initEvent = init(
             EnqueueArgs(q, NDRange(parallelism)),
             getInitialFrontiers(state),
@@ -49,10 +51,7 @@ public:
         events.push_back(initEvent);
     }
 
-    virtual bool stepSolve(CommandQueue &q, MazeState &state, std::vector<Event> &events) override {
-        vertex_t vege = VERTEX_INVALID;
-        q.enqueueWriteBuffer(meet, CL_FALSE, 0, sizeof(vertex_t), &vege);
-
+    bool stepSolve(CommandQueue &q, MazeState &state, std::vector<Event> &events) override {
         EnqueueArgs args(q, NDRange(state.width(), state.height()));
         Event expandEvent = expand(args, state.parent(), state.mazeData());
         Event markEvent = mark(args, state.mazeData());
@@ -65,6 +64,7 @@ public:
 
         events.insert(events.end(), {expandEvent, markEvent, vegeVanEvent});
 
+        vertex_t vege;
         q.enqueueReadBuffer(meet, CL_TRUE, 0, sizeof(vertex_t), &vege);
 
         return ~vege;
