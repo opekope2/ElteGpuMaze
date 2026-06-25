@@ -29,8 +29,10 @@ private:
 
     bfs::ParallelBFS _parBfs;
     bfs::Parallel2WayBFS _par2WayBfs;
+    bfs::ParallelWavefrontBFS _parWfBfs;
+    bfs::Parallel2WayWavefrontBFS _par2WayWfBfs;
     MazeSolver *_solver = nullptr;
-    std::vector<MazeSolver *> _solvers{&_parBfs, &_par2WayBfs};
+    std::vector<MazeSolver *> _solvers{&_parBfs, &_par2WayBfs, &_parWfBfs, &_par2WayWfBfs};
 
     bool _solved = false;
     cl_ulong _solveNs = 0;
@@ -44,7 +46,9 @@ public:
           _parKruskal(ctx),
           _seqBoruvka(ctx),
           _parBfs(ctx),
-          _par2WayBfs(ctx) {}
+          _par2WayBfs(ctx),
+          _parWfBfs(ctx),
+          _par2WayWfBfs(ctx) {}
 
     CommandQueue &queue() { return _q; }
 
@@ -60,6 +64,8 @@ public:
 
     MazeSolver *parallelBfs() { return &_parBfs; }
     MazeSolver *parallel2WayBfs() { return &_par2WayBfs; }
+    MazeSolver *parallelWavefrontBfs() { return &_parWfBfs; }
+    MazeSolver *parallel2WayWavefrontBfs() { return &_par2WayWfBfs; }
     MazeSolver *solver() { return _solver; }
     std::vector<MazeSolver *> &solvers() { return _solvers; }
 

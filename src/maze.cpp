@@ -90,6 +90,10 @@ void handleInput(GLFWwindow *window, int key, int scancode, int action, int mods
         manager->startSolving(manager->parallelBfs());
     if (key == GLFW_KEY_S && action != GLFW_RELEASE && !manager->solving() && !manager->solved())
         manager->startSolving(manager->parallel2WayBfs());
+    if (key == GLFW_KEY_E && action != GLFW_RELEASE && !manager->solving() && !manager->solved())
+        manager->startSolving(manager->parallelWavefrontBfs());
+    if (key == GLFW_KEY_D && action != GLFW_RELEASE && !manager->solving() && !manager->solved())
+        manager->startSolving(manager->parallel2WayWavefrontBfs());
 
     if (key == GLFW_KEY_SPACE && action != GLFW_RELEASE)
         speed = !speed;

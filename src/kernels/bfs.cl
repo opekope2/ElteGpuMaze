@@ -1,4 +1,5 @@
 #define FRONTIER(c) ((c & (SEARCH_EXPLORED | SEARCH_FRONTIER)) == SEARCH_FRONTIER)
+#define EXPAND(c) ((c & (SEARCH_EXPLORED | SEARCH_FRONTIER)) == 0)
 #define EXPAND_FROM(c) ((c & (SEARCH_EXPLORED | SEARCH_FRONTIER)) == (SEARCH_EXPLORED | SEARCH_FRONTIER))
 #define HAS_NO_WALL(c, w) ((c & w) == 0)
 
@@ -7,6 +8,14 @@
 kernel void init(vertex2_t frontiers, global maze_data_t *mazeData) {
     uint id = get_global_id(0);
     mazeData[frontiers[id]] |= SEARCH_EXPLORED | SEARCH_FRONTIER | (id * BFS_ORIGIN_END);
+}
+
+kernel void init_wavefront(vertex2_t frontiers, global uint *wavefrontSize, global vertex_t *wavefront, global maze_data_t *mazeData) {
+    uint id = get_global_id(0);
+    if (id == 0)
+        *wavefrontSize = get_global_size(0);
+    mazeData[frontiers[id]] |= SEARCH_FRONTIER | (id * BFS_ORIGIN_END);
+    wavefront[id] = frontiers[id];
 }
 
 kernel void expand(global vertex_t *parent, global maze_data_t *mazeData) {
@@ -35,6 +44,46 @@ kernel void expand(global vertex_t *parent, global maze_data_t *mazeData) {
             break;
         }
     }
+}
+
+kernel void expand_wavefront(uint width,
+                             uint height,
+                             const global uint *prevFrontierSize,
+                             const global vertex_t *prevFrontiers,
+                             global uint *frontierSize,
+                             global vertex_t *frontiers,
+                             global vertex_t *parent,
+                             global maze_data_t *mazeData) {
+    uint id = get_global_id(0);
+    if (id >= *prevFrontierSize)
+        return;
+
+    vertex_t v = prevFrontiers[id];
+    vertex4_t neighbors = getNeighbors(width, height, v);
+    maze_data_t vertexData = mazeData[v];
+    mazeData[v] |= SEARCH_EXPLORED;
+    mazeData[v] &= ~SEARCH_FRONTIER;
+
+    vertex_t newFrontiers[4];
+    uint newFrontiersSize = 0;
+
+    for (int i = 0; i < 4; i++) {
+        vertex_t neighbor = neighbors[i];
+        if (neighbor == VERTEX_INVALID)
+            continue;
+
+        maze_data_t neighborData = mazeData[neighbor];
+
+        if (HAS_NO_WALL(vertexData, 1 << i) && EXPAND(neighborData)) {
+            mazeData[neighbor] |= SEARCH_FRONTIER | (vertexData & BFS_ORIGIN_END);
+            parent[neighbor] = v;
+            newFrontiers[newFrontiersSize++] = neighbor;
+        }
+    }
+
+    uint index = atomic_add(frontierSize, newFrontiersSize);
+    for (int i = 0; i < newFrontiersSize; i++)
+        frontiers[i + index] = newFrontiers[i];
 }
 
 kernel void mark(global maze_data_t *mazeData) {
@@ -66,6 +115,47 @@ kernel void vege_van_2(uint width, uint height, const global maze_data_t *mazeDa
 
     if (UNEXPLORED(vertexData))
         return;
+
+    for (int i = 0; i < 4; i++) {
+        vertex_t neighbor = neighbors[i];
+        if (neighbor == VERTEX_INVALID)
+            continue;
+
+        maze_data_t neighborData = mazeData[neighbor];
+
+        if (HAS_NO_WALL(vertexData, 1 << i) && EXPLORED(neighborData) && ((vertexData ^ neighborData) & BFS_ORIGIN_END))
+            atomic_cmpxchg(meet, VERTEX_INVALID, v);
+    }
+}
+
+kernel void wege_wan(uint width,
+                     uint height,
+                     const global uint *frontierSize,
+                     const global vertex_t *frontiers,
+                     const global maze_data_t *mazeData,
+                     global vertex_t *meet) {
+    uint id = get_global_id(0);
+    if (id >= *frontierSize)
+        return;
+
+    uint n = width * height;
+    if (frontiers[id] == n - 1)
+        *meet = n - 1;
+}
+
+kernel void wege_wan_2(uint width,
+                       uint height,
+                       const global uint *frontierSize,
+                       const global vertex_t *frontiers,
+                       const global maze_data_t *mazeData,
+                       global vertex_t *meet) {
+    uint id = get_global_id(0);
+    if (id >= *frontierSize)
+        return;
+
+    vertex_t v = frontiers[id];
+    vertex4_t neighbors = getNeighbors(width, height, v);
+    maze_data_t vertexData = mazeData[v];
 
     for (int i = 0; i < 4; i++) {
         vertex_t neighbor = neighbors[i];

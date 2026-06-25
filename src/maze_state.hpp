@@ -6,6 +6,7 @@
 #include <CL/cl_platform.h>
 #include <CL/opencl.hpp>
 #include <cassert>
+#include <utility>
 #include <vector>
 
 using namespace cl;
@@ -20,6 +21,12 @@ protected:
 
     Buffer _parent;
     Buffer _mazeData;
+
+    cl_uint _cachedWavefrontSize;
+    Buffer _prevWavefrontSize;
+    Buffer _prevWavefront;
+    Buffer _wavefrontSize;
+    Buffer _wavefront;
 
 public:
     MazeState(Context &ctx) : _ctx(ctx) {}
@@ -36,6 +43,16 @@ public:
     Buffer &parent() { return _parent; }
     Buffer &mazeData() { return _mazeData; }
 
+    Buffer &prevWavefrontSize() { return _prevWavefrontSize; }
+    Buffer &prevWavefront() { return _prevWavefront; }
+    Buffer &wavefrontSize() { return _wavefrontSize; }
+    Buffer &wavefront() { return _wavefront; }
+
+    void swapWavefronts() { swap(_prevWavefrontSize, _wavefrontSize), swap(_prevWavefront, _wavefront); }
+
+    cl_uint cachedWavefrontSize() { return _cachedWavefrontSize; }
+    void updateWavefrontSize(CommandQueue &q) { q.enqueueReadBuffer(_wavefrontSize, CL_TRUE, 0, sizeof(cl_uint), &_cachedWavefrontSize); }
+
     virtual void size(cl_uint width, cl_uint height) {
         if (width < minWidth() || height < minHeight() || width > maxWidth() || height > maxHeight())
             return;
@@ -46,6 +63,11 @@ public:
         // TODO don't recreate each time
         _parent = Buffer(_ctx, CL_MEM_READ_WRITE, sizeof(vertex_t) * width * height);
         _mazeData = Buffer(_ctx, CL_MEM_READ_WRITE, sizeof(maze_data_t) * width * height);
+
+        _prevWavefrontSize = Buffer(_ctx, CL_MEM_READ_WRITE, sizeof(cl_uint));
+        _prevWavefront = Buffer(_ctx, CL_MEM_READ_WRITE, sizeof(vertex_t) * width * height);
+        _wavefrontSize = Buffer(_ctx, CL_MEM_READ_WRITE, sizeof(cl_uint));
+        _wavefront = Buffer(_ctx, CL_MEM_READ_WRITE, sizeof(vertex_t) * width * height);
     }
 
     void resize(cl_uint deltaWidth, cl_uint deltaHeight) { size(_width + deltaWidth, _height + deltaHeight); }
