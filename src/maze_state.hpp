@@ -21,6 +21,7 @@ protected:
 
     Buffer _parent;
     Buffer _mazeData;
+    Buffer _meet;
 
     cl_uint _cachedWavefrontSize;
     Buffer _prevWavefrontSize;
@@ -29,7 +30,9 @@ protected:
     Buffer _wavefront;
 
 public:
-    MazeState(Context &ctx) : _ctx(ctx) {}
+    MazeState(Context &ctx)
+        : _ctx(ctx),
+          _meet(ctx, CL_MEM_READ_WRITE, sizeof(vertex_t)) {}
 
     cl_uint width() { return _width; }
     cl_uint height() { return _height; }
@@ -42,6 +45,7 @@ public:
 
     Buffer &parent() { return _parent; }
     Buffer &mazeData() { return _mazeData; }
+    Buffer &meet() { return _meet; }
 
     Buffer &prevWavefrontSize() { return _prevWavefrontSize; }
     Buffer &prevWavefront() { return _prevWavefront; }

@@ -25,8 +25,6 @@ protected:
     KernelFunctor<cl_uint, cl_uint, Buffer, Buffer, Buffer> drawPath;
     KernelFunctor<cl_uint, cl_uint, Buffer, Buffer> vege_van;
 
-    Buffer meet;
-
 public:
     BFS(Context &ctx, string vegeVanKernel, size_type parallelism)
         : MazeSolver(ctx, buildProgram(ctx, cl::Program::Sources{XXD_STRING(maze_cl), XXD_STRING(solver_cl), XXD_STRING(bfs_cl)})),
@@ -35,13 +33,12 @@ public:
           mark(program, "mark"),
           expand(program, "expand"),
           drawPath(program, "drawPath"),
-          vege_van(program, vegeVanKernel),
-          meet(ctx, CL_MEM_READ_WRITE, sizeof(vertex_t)) {}
+          vege_van(program, vegeVanKernel) {}
 
     virtual vertex2_t getInitialFrontiers(MazeState &state) = 0;
 
     void markInitialFrontiers(CommandQueue &q, MazeState &state, std::vector<Event> &events) override {
-        q.enqueueFillBuffer<vertex_t>(meet, VERTEX_INVALID, 0, sizeof(vertex_t));
+        q.enqueueFillBuffer<vertex_t>(state.meet(), VERTEX_INVALID, 0, sizeof(vertex_t));
 
         Event initEvent = init(
             EnqueueArgs(q, NDRange(parallelism)),
@@ -60,12 +57,12 @@ public:
             state.width(),
             state.height(),
             state.mazeData(),
-            meet);
+            state.meet());
 
         events.insert(events.end(), {expandEvent, markEvent, vegeVanEvent});
 
         vertex_t vege;
-        q.enqueueReadBuffer(meet, CL_TRUE, 0, sizeof(vertex_t), &vege);
+        q.enqueueReadBuffer(state.meet(), CL_TRUE, 0, sizeof(vertex_t), &vege);
 
         return ~vege;
     }
@@ -75,7 +72,7 @@ public:
             EnqueueArgs(q, NDRange(parallelism)),
             state.width(),
             state.height(),
-            meet,
+            state.meet(),
             state.parent(),
             state.mazeData());
     }
@@ -104,8 +101,6 @@ private:
     KernelFunctor<cl_uint, cl_uint, Buffer, Buffer, Buffer> drawPath;
     KernelFunctor<cl_uint, cl_uint, Buffer, Buffer, Buffer, Buffer> vege_van;
 
-    Buffer meet;
-
 public:
     WavefrontBFS(Context &ctx, string vegeVanKernel, size_type parallelism)
         : MazeSolver(ctx, buildProgram(ctx, cl::Program::Sources{XXD_STRING(maze_cl), XXD_STRING(solver_cl), XXD_STRING(bfs_cl)})),
@@ -113,13 +108,12 @@ public:
           initWavefront(program, "init_wavefront"),
           expandWavefront(program, "expand_wavefront"),
           drawPath(program, "drawPath"),
-          vege_van(program, vegeVanKernel),
-          meet(ctx, CL_MEM_READ_WRITE, sizeof(vertex_t)) {}
+          vege_van(program, vegeVanKernel) {}
 
     virtual vertex2_t getInitialFrontiers(MazeState &state) = 0;
 
     void markInitialFrontiers(CommandQueue &q, MazeState &state, std::vector<Event> &events) override {
-        q.enqueueFillBuffer<vertex_t>(meet, VERTEX_INVALID, 0, sizeof(vertex_t));
+        q.enqueueFillBuffer<vertex_t>(state.meet(), VERTEX_INVALID, 0, sizeof(vertex_t));
 
         Event initEvent = initWavefront(
             EnqueueArgs(q, NDRange(parallelism)),
@@ -155,12 +149,12 @@ public:
             state.prevWavefrontSize(),
             state.prevWavefront(),
             state.mazeData(),
-            meet);
+            state.meet());
 
         events.insert(events.end(), {expandEvent, vegeVanEvent});
 
         vertex_t vege;
-        q.enqueueReadBuffer(meet, CL_TRUE, 0, sizeof(vertex_t), &vege);
+        q.enqueueReadBuffer(state.meet(), CL_TRUE, 0, sizeof(vertex_t), &vege);
 
         state.updateWavefrontSize(q);
         state.swapWavefronts();
@@ -173,7 +167,7 @@ public:
             EnqueueArgs(q, NDRange(parallelism)),
             state.width(),
             state.height(),
-            meet,
+            state.meet(),
             state.parent(),
             state.mazeData());
     }
