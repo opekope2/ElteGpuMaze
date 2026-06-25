@@ -86,6 +86,8 @@ void handleInput(GLFWwindow *window, int key, int scancode, int action, int mods
         manager->generator(manager->parallelSortedKruskal()), regenerate = true;
     if (key == GLFW_KEY_B && action != GLFW_RELEASE)
         manager->generator(manager->sequentialBoruvka()), regenerate = true;
+    if (key == GLFW_KEY_A && action != GLFW_RELEASE && !manager->solving() && !manager->solved())
+        manager->startSolving(manager->sequentialAStar());
     if (key == GLFW_KEY_W && action != GLFW_RELEASE && !manager->solving() && !manager->solved())
         manager->startSolving(manager->parallelBfs());
     if (key == GLFW_KEY_S && action != GLFW_RELEASE && !manager->solving() && !manager->solved())

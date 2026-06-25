@@ -1,5 +1,6 @@
 #pragma once
 
+#include "astar.hpp"
 #include "bfs.hpp"
 #include "boruvka.hpp"
 #include "kruskal.hpp"
@@ -31,8 +32,9 @@ private:
     bfs::Parallel2WayBFS _par2WayBfs;
     bfs::ParallelWavefrontBFS _parWfBfs;
     bfs::Parallel2WayWavefrontBFS _par2WayWfBfs;
+    astar::AStar _seqAStar;
     MazeSolver *_solver = nullptr;
-    std::vector<MazeSolver *> _solvers{&_parBfs, &_par2WayBfs, &_parWfBfs, &_par2WayWfBfs};
+    std::vector<MazeSolver *> _solvers{&_parBfs, &_par2WayBfs, &_parWfBfs, &_par2WayWfBfs, &_seqAStar};
 
     bool _solved = false;
     cl_ulong _solveNs = 0;
@@ -48,7 +50,8 @@ public:
           _parBfs(ctx),
           _par2WayBfs(ctx),
           _parWfBfs(ctx),
-          _par2WayWfBfs(ctx) {}
+          _par2WayWfBfs(ctx),
+          _seqAStar(ctx) {}
 
     CommandQueue &queue() { return _q; }
 
@@ -66,6 +69,7 @@ public:
     MazeSolver *parallel2WayBfs() { return &_par2WayBfs; }
     MazeSolver *parallelWavefrontBfs() { return &_parWfBfs; }
     MazeSolver *parallel2WayWavefrontBfs() { return &_par2WayWfBfs; }
+    MazeSolver *sequentialAStar() { return &_seqAStar; }
     MazeSolver *solver() { return _solver; }
     std::vector<MazeSolver *> &solvers() { return _solvers; }
 

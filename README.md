@@ -124,6 +124,7 @@ You'll need `libepoxy-0.dll`, `libgcc_s_seh-1.dll`, `libstdc++-6.dll`, and `libw
 * `P`: Generate maze using Sequential Prim algorithm
 * `K`: Generate maze using Parallel-Sorted Kruskal algorithm
 * `B`: Generate maze using Sequential Boruvka algorithm
+* `A`: Solve maze using Sequential A* algorithm
 * `W`: Solve maze using Parallel Naive Breadth-First Search algorithm
 * `S`: Solve maze using Parallel 2-Way Naive Breadth-First Search algorithm
 * `E`: Solve maze using Parallel Wavefront Breadth-First Search algorithm
