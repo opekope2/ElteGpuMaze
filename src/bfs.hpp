@@ -11,6 +11,11 @@
 #include <CL/opencl.hpp>
 #include <sys/types.h>
 
+#define PREV_WAVEFRONT_SIZE(s) s.size1()
+#define WAVEFRONT_SIZE(s) s.size2()
+#define PREV_WAVEFRONT(s) s.vertex1()
+#define WAVEFRONT(s) s.vertex2()
+
 using namespace cl;
 
 namespace bfs {
@@ -118,8 +123,8 @@ public:
         Event initEvent = initWavefront(
             EnqueueArgs(q, NDRange(parallelism)),
             getInitialFrontiers(state),
-            state.wavefrontSize(),
-            state.wavefront(),
+            WAVEFRONT_SIZE(state),
+            WAVEFRONT(state),
             state.mazeData());
 
         events.push_back(initEvent);
@@ -129,25 +134,25 @@ public:
     }
 
     bool stepSolve(CommandQueue &q, MazeState &state, std::vector<Event> &events) override {
-        q.enqueueFillBuffer<vertex_t>(state.wavefrontSize(), 0, 0, sizeof(vertex_t));
+        q.enqueueFillBuffer<vertex_t>(WAVEFRONT_SIZE(state), 0, 0, sizeof(vertex_t));
 
         EnqueueArgs args(q, NDRange(nextPowerOf2(state.cachedWavefrontSize())));
         Event expandEvent = expandWavefront(
             args,
             state.width(),
             state.height(),
-            state.prevWavefrontSize(),
-            state.prevWavefront(),
-            state.wavefrontSize(),
-            state.wavefront(),
+            PREV_WAVEFRONT_SIZE(state),
+            PREV_WAVEFRONT(state),
+            WAVEFRONT_SIZE(state),
+            WAVEFRONT(state),
             state.parent(),
             state.mazeData());
         Event vegeVanEvent = vege_van(
             args,
             state.width(),
             state.height(),
-            state.prevWavefrontSize(),
-            state.prevWavefront(),
+            PREV_WAVEFRONT_SIZE(state),
+            PREV_WAVEFRONT(state),
             state.mazeData(),
             state.meet());
 

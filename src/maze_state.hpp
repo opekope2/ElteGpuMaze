@@ -24,15 +24,20 @@ protected:
     Buffer _meet;
 
     cl_uint _cachedWavefrontSize;
-    Buffer _prevWavefrontSize;
-    Buffer _prevWavefront;
-    Buffer _wavefrontSize;
-    Buffer _wavefront;
+
+    Buffer _size1;
+    Buffer _size2;
+    Buffer _v1;
+    Buffer _v2;
+    Buffer _ui1;
+    Buffer _ui2;
 
 public:
     MazeState(Context &ctx)
         : _ctx(ctx),
-          _meet(ctx, CL_MEM_READ_WRITE, sizeof(vertex_t)) {}
+          _meet(ctx, CL_MEM_READ_WRITE, sizeof(vertex_t)),
+          _size1(ctx, CL_MEM_READ_WRITE, sizeof(cl_uint)),
+          _size2(ctx, CL_MEM_READ_WRITE, sizeof(cl_uint)) {}
 
     cl_uint width() { return _width; }
     cl_uint height() { return _height; }
@@ -47,15 +52,17 @@ public:
     Buffer &mazeData() { return _mazeData; }
     Buffer &meet() { return _meet; }
 
-    Buffer &prevWavefrontSize() { return _prevWavefrontSize; }
-    Buffer &prevWavefront() { return _prevWavefront; }
-    Buffer &wavefrontSize() { return _wavefrontSize; }
-    Buffer &wavefront() { return _wavefront; }
+    Buffer &size1() { return _size1; }
+    Buffer &size2() { return _size2; }
+    Buffer &vertex1() { return _v1; }
+    Buffer &vertex2() { return _v2; }
+    Buffer &uint1() { return _ui1; }
+    Buffer &uint2() { return _ui2; }
 
-    void swapWavefronts() { swap(_prevWavefrontSize, _wavefrontSize), swap(_prevWavefront, _wavefront); }
+    void swapWavefronts() { swap(_size1, _size2), swap(_v1, _v2); }
 
     cl_uint cachedWavefrontSize() { return _cachedWavefrontSize; }
-    void updateWavefrontSize(CommandQueue &q) { q.enqueueReadBuffer(_wavefrontSize, CL_TRUE, 0, sizeof(cl_uint), &_cachedWavefrontSize); }
+    void updateWavefrontSize(CommandQueue &q) { q.enqueueReadBuffer(_size2, CL_TRUE, 0, sizeof(cl_uint), &_cachedWavefrontSize); }
 
     virtual void size(cl_uint width, cl_uint height) {
         if (width < minWidth() || height < minHeight() || width > maxWidth() || height > maxHeight())
@@ -68,10 +75,10 @@ public:
         _parent = Buffer(_ctx, CL_MEM_READ_WRITE, sizeof(vertex_t) * width * height);
         _mazeData = Buffer(_ctx, CL_MEM_READ_WRITE, sizeof(maze_data_t) * width * height);
 
-        _prevWavefrontSize = Buffer(_ctx, CL_MEM_READ_WRITE, sizeof(cl_uint));
-        _prevWavefront = Buffer(_ctx, CL_MEM_READ_WRITE, sizeof(vertex_t) * width * height);
-        _wavefrontSize = Buffer(_ctx, CL_MEM_READ_WRITE, sizeof(cl_uint));
-        _wavefront = Buffer(_ctx, CL_MEM_READ_WRITE, sizeof(vertex_t) * width * height);
+        _v1 = Buffer(_ctx, CL_MEM_READ_WRITE, sizeof(vertex_t) * width * height);
+        _v2 = Buffer(_ctx, CL_MEM_READ_WRITE, sizeof(vertex_t) * width * height);
+        _ui1 = Buffer(_ctx, CL_MEM_READ_WRITE, sizeof(cl_uint) * width * height);
+        _ui2 = Buffer(_ctx, CL_MEM_READ_WRITE, sizeof(cl_uint) * width * height);
     }
 
     void resize(cl_uint deltaWidth, cl_uint deltaHeight) { size(_width + deltaWidth, _height + deltaHeight); }
