@@ -125,6 +125,11 @@ You'll need `libepoxy-0.dll`, `libgcc_s_seh-1.dll`, `libstdc++-6.dll`, and `libw
 * `K`: Generate maze using Parallel-Sorted Kruskal algorithm
 * `B`: Generate maze using Sequential Boruvka algorithm
 * `W`: Solve maze using Parallel Breadth-First Search algorithm
+* `S`: Solve maze using Parallel 2-Way Breadth-First Search algorithm
+* `SPACE`: Pause/resume solving
+* `[`: Decrease solving speed by 1
+* `]`: Increase solving speed by 1
+* `.`: Step the solver 1 step forward
 * `Q`: Quit
 
 Hold `CTRL` to increase or decrease values by 10.
