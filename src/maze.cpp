@@ -38,6 +38,7 @@ cl_ulong generateMaze(MazeManager *manager) {
 #if defined(GUI)
 void step(MazeManager *manager) {
     if (manager->stepSolve()) {
+        manager->solver()->showPath(manager->queue(), manager->state());
         cl_ulong solveNs = manager->solveNs();
         cl_ulong solveMs = solveNs / 1'000'000;
         cout << format("Solved {}x{} maze using {} in {}ms/{}ns", manager->state().width(), manager->state().height(), manager->solver()->name(), solveMs, solveNs) << endl;

@@ -22,13 +22,16 @@ protected:
     KernelFunctor<Buffer, Buffer> expand;
     KernelFunctor<cl_uint, cl_uint, Buffer, Buffer, Buffer> drawPath;
 
+    Buffer meet;
+
 public:
     BFS(Context &ctx)
         : MazeSolver(ctx, buildProgram(ctx, cl::Program::Sources{XXD_STRING(maze_cl), XXD_STRING(solver_cl), XXD_STRING(bfs_cl)})),
           init(program, "init"),
           mark(program, "mark"),
           expand(program, "expand"),
-          drawPath(program, "drawPath") {}
+          drawPath(program, "drawPath"),
+          meet(ctx, CL_MEM_READ_WRITE, sizeof(vertex_t)) {}
 
     virtual bool stepSolve(CommandQueue &q, MazeState &state, std::vector<Event> &events) override {
         EnqueueArgs args(q, NDRange(state.width(), state.height()));
@@ -61,26 +64,21 @@ public:
         BFS::stepSolve(q, state, events);
 
         size_type n = static_cast<size_type>(state.width()) * static_cast<size_type>(state.height());
-        maze_data_t lastCell;
-        q.enqueueReadBuffer(state.mazeData(), CL_TRUE, sizeof(maze_data_t) * (n - 1), sizeof(maze_data_t), &lastCell);
-        bool done = (lastCell & SEARCH_EXPLORED) != 0;
+        maze_data_t vege;
+        q.enqueueReadBuffer(state.mazeData(), CL_TRUE, sizeof(maze_data_t) * (n - 1), sizeof(maze_data_t), &vege);
 
-        if (done) {
-            vertex_t vege = state.width() * state.height() - 1;
-            Buffer meet(ctx, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(vertex_t), &vege);
-            Event drawPathEvent = drawPath(
-                EnqueueArgs(q, NDRange(1)),
-                state.width(),
-                state.height(),
-                meet,
-                state.parent(),
-                state.mazeData());
-            events.push_back(drawPathEvent);
-        }
+        return (vege & SEARCH_EXPLORED) != 0;
+    }
 
-        q.finish();
-
-        return done;
+    void showPath(CommandQueue &q, MazeState &state) override {
+        q.enqueueFillBuffer<vertex_t>(meet, state.width() * state.height() - 1, 0, sizeof(vertex_t));
+        drawPath(
+            EnqueueArgs(q, NDRange(1)),
+            state.width(),
+            state.height(),
+            meet,
+            state.parent(),
+            state.mazeData());
     }
 };
 
@@ -107,7 +105,7 @@ public:
         BFS::stepSolve(q, state, events);
 
         vertex_t vege = VERTEX_INVALID;
-        Buffer meet(ctx, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(vertex_t), &vege);
+        q.enqueueWriteBuffer(meet, CL_FALSE, 0, sizeof(vertex_t), &vege);
 
         Event vege_van_event = vege_van(
             EnqueueArgs(q, NDRange(state.width(), state.height())),
@@ -116,20 +114,17 @@ public:
         events.push_back(vege_van_event);
         q.enqueueReadBuffer(meet, CL_TRUE, 0, sizeof(vertex_t), &vege);
 
-        if (~vege) {
-            Event drawPathEvent = drawPath(
-                EnqueueArgs(q, NDRange(2)),
-                state.width(),
-                state.height(),
-                meet,
-                state.parent(),
-                state.mazeData());
-            events.push_back(drawPathEvent);
-        }
-
-        q.finish();
-
         return ~vege;
+    }
+
+    void showPath(CommandQueue &q, MazeState &state) override {
+        drawPath(
+            EnqueueArgs(q, NDRange(2)),
+            state.width(),
+            state.height(),
+            meet,
+            state.parent(),
+            state.mazeData());
     }
 };
 

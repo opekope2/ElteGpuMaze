@@ -17,4 +17,5 @@ public:
     virtual string name() = 0;
     virtual void markInitialFrontiers(CommandQueue &q, MazeState &state, std::vector<Event> &events) = 0;
     virtual bool stepSolve(CommandQueue &q, MazeState &state, std::vector<Event> &events) = 0;
+    virtual void showPath(CommandQueue &q, MazeState &state) = 0;
 };
