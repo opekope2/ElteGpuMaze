@@ -12,6 +12,10 @@
 #include <CL/opencl.hpp>
 #include <vector>
 
+#define DSU_SIZE(s) s.uint1()
+#define DSU_PARENT(s) s.vertex1()
+#define MINOUT(s) s.uint2()
+
 using namespace cl;
 
 namespace boruvka {
@@ -36,17 +40,14 @@ public:
         dsu_size_t m = 2 * state.width() * state.height() - state.width() - state.height();
 
         // Does not fit into local memory on moderately large mazes, which resets my GPU
-        Buffer dsu_size(ctx, CL_MEM_READ_WRITE, sizeof(dsu_size_t) * n);
-        Buffer dsu_parent(ctx, CL_MEM_READ_WRITE, sizeof(vertex_t) * n);
-        Buffer minout(ctx, CL_MEM_READ_WRITE, sizeof(cl_uint) * n);
         Buffer edges_buffer(ctx, CL_MEM_READ_WRITE, sizeof(Edge) * m);
 
         q.enqueueFillBuffer<maze_data_t>(state.mazeData(), WALL_TOP | WALL_RIGHT | WALL_BOTTOM | WALL_LEFT, 0, sizeof(maze_data_t) * n);
 
         Event dsuInitEvent = dsu_init(
             EnqueueArgs(q, NDRange(n)),
-            dsu_size,
-            dsu_parent);
+            DSU_SIZE(state),
+            DSU_PARENT(state));
         Event generateEdgesEvent = generateEdges(
             EnqueueArgs(q, NDRange(state.width(), state.height())),
             state.seed(),
@@ -55,9 +56,9 @@ public:
             EnqueueArgs(q, NDRange(1)),
             n,
             m,
-            dsu_size,
-            dsu_parent,
-            minout,
+            DSU_SIZE(state),
+            DSU_PARENT(state),
+            MINOUT(state),
             edges_buffer,
             state.mazeData());
 

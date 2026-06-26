@@ -10,6 +10,11 @@
 #include <CL/cl_platform.h>
 #include <CL/opencl.hpp>
 
+#define HEAP(s) s.vertex1()
+#define LOOKUP(s) s.vertex2()
+#define PRIORITIES(s) s.uint1()
+#define UNEXPLORED(s) s.uint2()
+
 using namespace cl;
 
 namespace prim {
@@ -30,13 +35,9 @@ public:
 
         // Does not fit into local memory on moderately large mazes, which resets my GPU
         Buffer cheapestEdge(ctx, CL_MEM_READ_WRITE, sizeof(vertex_t) * n);
-        Buffer unexplored(ctx, CL_MEM_READ_WRITE, sizeof(cl_uchar) * n);
-        Buffer heap(ctx, CL_MEM_READ_WRITE, sizeof(vertex_t) * n);
-        Buffer lookup(ctx, CL_MEM_READ_WRITE, sizeof(vertex_t) * n);
-        Buffer priorities(ctx, CL_MEM_READ_WRITE, sizeof(cl_uint) * n);
 
         q.enqueueFillBuffer<vertex_t>(cheapestEdge, VERTEX_INVALID, 0, sizeof(vertex_t) * n);
-        q.enqueueFillBuffer<cl_uchar>(unexplored, 1, 0, sizeof(cl_uchar) * n);
+        q.enqueueFillBuffer<cl_uchar>(UNEXPLORED(state), 1, 0, sizeof(cl_uchar) * n);
         q.enqueueFillBuffer<maze_data_t>(state.mazeData(), WALL_TOP | WALL_RIGHT | WALL_BOTTOM | WALL_LEFT, 0, sizeof(maze_data_t) * n);
 
         Event generateEvent = seqPrim(
@@ -45,10 +46,10 @@ public:
             state.height(),
             state.seed(),
             cheapestEdge,
-            unexplored,
-            heap,
-            lookup,
-            priorities,
+            UNEXPLORED(state),
+            HEAP(state),
+            LOOKUP(state),
+            PRIORITIES(state),
             state.mazeData());
 
         events.push_back(generateEvent);

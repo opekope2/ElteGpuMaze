@@ -12,6 +12,9 @@
 #include <climits>
 #include <vector>
 
+#define DSU_SIZE(s) s.uint1()
+#define DSU_PARENT(s) s.vertex1()
+
 using namespace cl;
 
 namespace kruskal {
@@ -39,8 +42,6 @@ public:
         dsu_size_t m2 = nextPowerOf2(m);
 
         // Does not fit into local memory on moderately large mazes, which resets my GPU
-        Buffer dsuSize(ctx, CL_MEM_READ_WRITE, sizeof(dsu_size_t) * n);
-        Buffer dsuParent(ctx, CL_MEM_READ_WRITE, sizeof(vertex_t) * n);
         Buffer edges(ctx, CL_MEM_READ_WRITE, sizeof(Edge) * m2);
 
         q.enqueueFillBuffer<cl_uint>(edges, UINT_MAX, sizeof(Edge) * m, sizeof(Edge) * (m2 - m));
@@ -48,8 +49,8 @@ public:
 
         Event dsuInitEvent = dsuInit(
             EnqueueArgs(q, NDRange(n)),
-            dsuSize,
-            dsuParent);
+            DSU_SIZE(state),
+            DSU_PARENT(state));
         Event generateEdgesEvent = generateEdges(
             EnqueueArgs(q, NDRange(state.width(), state.height())),
             state.seed(),
@@ -60,8 +61,8 @@ public:
             EnqueueArgs(q, NDRange(1)),
             n,
             m2,
-            dsuSize,
-            dsuParent,
+            DSU_SIZE(state),
+            DSU_PARENT(state),
             edges,
             state.mazeData());
 
