@@ -19,6 +19,8 @@ void printResult(ostream &stream, Benchmark &benchmark, cl_uint seed, cl_ulong t
     stream << benchmark.device.getInfo<CL_DEVICE_PROFILE>() << TAB;
     stream << benchmark.device.getInfo<CL_DRIVER_VERSION>() << TAB;
 
+    stream << benchmark.name << TAB;
+
     stream << benchmark.size << TAB;
     stream << seed << TAB;
 

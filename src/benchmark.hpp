@@ -25,6 +25,8 @@ const string HEADER = "os" TAB
                       "device.profile" TAB
                       "driver.version" TAB
 
+                      "benchmark.name" TAB
+
                       "maze.size" TAB
                       "maze.seed" TAB
 
