@@ -58,9 +58,7 @@ The sequential A* has abysmal performance. We had to use logarithmic scale so as
 
 We have evaluated the performance of multiple maze generator and solver algorithms on multiple maze sizes on multiple operating systems, drivers, and hardware.
 
-The average time it takes to generate a maze can be seen on the figures below. The intended sample size is 256, after 256 rounds of warmup.
-
-Interestingly, we could get the benchmark to work on Android using Termux and clvk, however, it wasn't very stable: many test cases crashed before achieving the intended sample size.
+The average time it takes to generate a maze can be seen on the figures below. The intended sample size is 256, after 256 rounds of warmup. Only the kernel execution time is measured (not buffer reads or writes), and measured as the difference between `CL_PROFILING_COMMAND_END` and `CL_PROFILING_COMMAND_START`.
 
 ![32x32 Maze solving performance](Solve32.png)
 
