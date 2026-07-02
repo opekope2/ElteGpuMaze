@@ -59,7 +59,7 @@ public:
     Buffer &uint1() { return _ui1; }
     Buffer &uint2() { return _ui2; }
 
-    void swapWavefronts() { swap(_size1, _size2), swap(_v1, _v2); }
+    void swapWavefronts() { std::swap(_size1, _size2), std::swap(_v1, _v2); }
 
     cl_uint cachedWavefrontSize() { return _cachedWavefrontSize; }
     void updateWavefrontSize(CommandQueue &q) { q.enqueueReadBuffer(_size2, CL_TRUE, 0, sizeof(cl_uint), &_cachedWavefrontSize); }

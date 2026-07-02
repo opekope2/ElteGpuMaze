@@ -13,7 +13,6 @@
 
 #define VERTEX_COUNT (4 * 2)
 
-using namespace std;
 using namespace cl;
 
 extern float fullQuadVerts[VERTEX_COUNT];

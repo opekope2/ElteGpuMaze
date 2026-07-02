@@ -5,7 +5,7 @@
 
 namespace benchmark {
 
-void printResult(ostream &stream, Benchmark &benchmark, cl_uint seed, cl_ulong time) {
+void printResult(std::ostream &stream, Benchmark &benchmark, cl_uint seed, cl_ulong time) {
     stream << STR(OS) << TAB;
 
     stream << benchmark.platform.getInfo<CL_PLATFORM_NAME>() << TAB;
@@ -24,7 +24,7 @@ void printResult(ostream &stream, Benchmark &benchmark, cl_uint seed, cl_ulong t
     stream << benchmark.size << TAB;
     stream << seed << TAB;
 
-    stream << time << endl;
+    stream << time << std::endl;
 }
 
 } // namespace benchmark

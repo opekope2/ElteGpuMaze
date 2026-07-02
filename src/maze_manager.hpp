@@ -13,7 +13,6 @@
 #include <CL/opencl.hpp>
 #include <vector>
 
-using namespace std;
 using namespace cl;
 
 class MazeManager {

@@ -10,7 +10,6 @@
 #include <epoxy/gl.h>
 #include <format>
 
-using namespace std;
 using namespace cl;
 
 #define GL_DELETE_1(f) \
@@ -85,7 +84,7 @@ inline GlShader createShader(string shaderType, const char *source) {
     GLchar log[1024];
     glGetShaderInfoLog(shader, 1024, NULL, log);
 
-    throw runtime_error(format("{} shader compilation error:\n{}", shaderType, log));
+    throw std::runtime_error(std::format("{} shader compilation error:\n{}", shaderType, log));
 }
 
 inline GlProgram createShaderProgram(const GLchar *vertexShader, const GLchar *fragmentShader) {
@@ -105,7 +104,7 @@ inline GlProgram createShaderProgram(const GLchar *vertexShader, const GLchar *f
     GLchar log[1024];
     glGetProgramInfoLog(program, 1024, NULL, log);
 
-    throw runtime_error(format("Shader program linking error:\n{}", log));
+    throw std::runtime_error(std::format("Shader program linking error:\n{}", log));
 }
 
 #endif

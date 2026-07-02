@@ -7,7 +7,6 @@
 
 #define TAB "\t"
 
-using namespace std;
 using namespace cl;
 
 namespace benchmark {
@@ -42,6 +41,6 @@ struct Benchmark {
     Device &device;
 };
 
-void printResult(ostream &stream, Benchmark &benchmark, cl_uint seed, cl_ulong time);
+void printResult(std::ostream &stream, Benchmark &benchmark, cl_uint seed, cl_ulong time);
 
 }; // namespace benchmark

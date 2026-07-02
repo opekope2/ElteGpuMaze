@@ -24,7 +24,7 @@ DEBUG_FLAGS=(-g -O0)
 
 if [ ! "$GUI" = 0 ]; then
     DEFINES+=(-DGUI -DGLFW_INCLUDE_NONE)
-    [ ! "$OS" = "windows" ] && LDFLAGS+=(-lglfw -lepoxy -lEGL) || LDFLAGS+=(-lglfw3 -lgdi32 -lopengl32)
+    [ ! "$OS" = "windows" ] && LDFLAGS+=(-lglfw -lepoxy -lEGL) || LDFLAGS+=(-lglfw3 -lepoxy -lgdi32 -lopengl32)
 fi
 
 # Commands
